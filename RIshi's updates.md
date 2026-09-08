@@ -166,15 +166,50 @@ This document tracks all changes, configurations, installations, and development
 
 ---
 
+### 14. Interactive Notification Click-to-Chat Navigation
+- **Requirement Implemented:** When a user receives a message notification, clicking that notification in the dropdown or notification center should automatically open the specific chat page with the sender, and automatically mark the notification as read.
+- **Root Cause of Previous Static Behavior:** Notifications in the dropdown and list were rendered as plain static `<div>` containers without `<a>` tags, click actions, or target URLs.
+- **Solution Implemented:**
+  - Added `target_url` accessor on the `Notification` model: parses message sender information and dynamically generates the conversation link (`/messages?user_id={sender_id}`), as well as appropriate links for appointments, lab results, and billing.
+  - Added a dedicated click-handler route: `GET /notifications/{id}/open` in `CommunicationController@openNotification` which marks the notification as read (`is_read = true`) and redirects the user directly to the target conversation or module.
+  - Converted static notification cards in [resources/views/layouts/app.blade.php](file:///c:/xampp/htdocs/php-hospital/resources/views/layouts/app.blade.php) and [resources/views/communication/notifications.blade.php](file:///c:/xampp/htdocs/php-hospital/resources/views/communication/notifications.blade.php) into interactive links.
+- **Database Schema Changed:** **NO** (Strictly zero database schema or table changes).
+- **Verification Results:**
+  - Clicked "New Internal Message" from Rishi Shaw in Dr. Sarah's notifications dropdown: **PASS**
+  - Successfully redirected directly to `http://127.0.0.1:8000/messages?user_id=14`: **PASS**
+  - Active conversation with message history loaded on chat screen: **PASS**
+  - Unread notification counter automatically decremented: **PASS**
+
+---
+
+### 15. Notification Dropdown Unread Filtering (Auto-Removal of Clicked Notifications)
+- **Issue Reported:** When clicking a specific notification from the top bell dropdown, the user was redirected to the target conversation and the unread count decremented as expected, but the clicked notification still appeared in the dropdown list upon page refresh.
+- **Root Cause:** The dropdown loop in [resources/views/layouts/app.blade.php](file:///c:/xampp/htdocs/php-hospital/resources/views/layouts/app.blade.php) originally queried `Auth::user()->notifications()->take(6)->get()`, which fetched the latest 6 notifications regardless of whether their `is_read` status was `true` or `false`.
+- **Solution Implemented:**
+  - Updated the dropdown loop in `app.blade.php` to filter by unread notifications: `Auth::user()->notifications()->where('is_read', false)->latest()->take(6)->get()`.
+  - Once a notification is clicked, `openNotification()` sets `is_read = true`.
+  - When the page loads or refreshes, the read notification is immediately excluded from the bell dropdown.
+  - Added an empty state: displays *"No unread notifications"* when all notifications are read, and conditionally hides the "Mark all read" button.
+  - Historical notifications (both read and unread) remain accessible at any time via *"View All Notifications &rarr;"* (`/notifications`).
+- **Database Schema Changed:** **NO** (Strictly zero database schema or table changes).
+- **Verification Results:**
+  - Browser inspection of bell dropdown on Dashboard: **PASS**
+  - Read notifications excluded from dropdown: **PASS**
+  - Only active unread notifications displayed with accurate badge count: **PASS**
+
+---
+
 ## Current Status
 - **Web App Status:** Running on `http://127.0.0.1:8000`
 - **Database Status:** Connected to MySQL (`hospital` database)
 - **Bed Management & Discharge Authorization:** Fully Enforced, Functional & Tested
+- **Notification Navigation & Dropdown Filtering:** Active, Tested & Verified
 - **Quick Demo Accounts Configured:**
   - **Superadmin:** `superadmin@hospital.test`
   - **Admin:** `admin@hospital.test`
   - **Doctor (Attending):** `dr.sarah@hospital.test`
   - **Receptionist:** `receptionist@hospital.test`
+
 
 
 

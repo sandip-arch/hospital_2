@@ -299,27 +299,29 @@
                          class="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200/80 py-3 z-50">
                         <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
                             <span class="font-heading font-bold text-sm text-slate-900">Notifications ({{ $unreadNotifs }} New)</span>
+                            @if($unreadNotifs > 0)
                             <form action="{{ route('communication.notifications.readAll') }}" method="POST">
                                 @csrf
                                 <button type="submit" class="text-xs font-bold text-cyan-600 hover:underline">Mark all read</button>
                             </form>
+                            @endif
                         </div>
                         <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 custom-scrollbar">
-                            @forelse(Auth::user()->notifications()->take(6)->get() as $n)
-                            <div class="p-3.5 hover:bg-slate-50/80 transition flex gap-3 {{ $n->is_read ? 'opacity-70' : 'bg-cyan-50/30' }}">
-                                <div class="w-8 h-8 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs shrink-0 mt-0.5">
+                            @forelse(Auth::user()->notifications()->where('is_read', false)->latest()->take(6)->get() as $n)
+                            <a href="{{ route('communication.notifications.open', $n->id) }}" class="p-3.5 hover:bg-slate-50/80 transition flex gap-3 bg-cyan-50/30 block group">
+                                <div class="w-8 h-8 rounded-xl bg-cyan-100 group-hover:bg-cyan-600 group-hover:text-white text-cyan-700 flex items-center justify-center text-xs shrink-0 mt-0.5 transition">
                                     <i class="fa-solid {{ $n->type_icon }}"></i>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-xs font-bold text-slate-900 truncate">{{ $n->title }}</p>
+                                    <p class="text-xs font-bold text-slate-900 truncate group-hover:text-cyan-700 transition">{{ $n->title }}</p>
                                     <p class="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{{ $n->message }}</p>
                                     <span class="text-[10px] text-slate-400 mt-1 block font-medium">{{ $n->created_at->diffForHumans() }}</span>
                                 </div>
-                            </div>
+                            </a>
                             @empty
                             <div class="p-8 text-center text-xs text-slate-400">
                                 <i class="fa-regular fa-bell-slash text-2xl mb-2 text-slate-300"></i>
-                                <p>No notifications yet</p>
+                                <p>No unread notifications</p>
                             </div>
                             @endforelse
                         </div>
