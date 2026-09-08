@@ -1,0 +1,124 @@
+@extends('layouts.auth')
+
+@section('title', 'Patient Self-Registration')
+
+@section('content')
+<div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-800/40 p-8 lg:p-12">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6 pb-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
+                <i class="fa-solid fa-hospital-user text-xl"></i>
+            </div>
+            <div>
+                <h2 class="font-black text-slate-900 text-lg leading-tight">Patient Portal Registration</h2>
+                <p class="text-xs text-cyan-600 font-bold uppercase tracking-wider">Instant UPI Generation</p>
+            </div>
+        </div>
+        <a href="{{ route('login') }}" class="text-xs text-slate-500 hover:text-cyan-600 font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> Back to Login
+        </a>
+    </div>
+
+    @if($errors->any())
+    <div class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700">
+        <ul class="list-disc list-inside space-y-1">
+            @foreach($errors->all() as $err)
+            <li>{{ $err }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    <form action="{{ route('register.submit') }}" method="POST" class="space-y-4">
+        @csrf
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">First Name *</label>
+                <input type="text" name="first_name" value="{{ old('first_name') }}" required
+                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="e.g. Johnathan">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Last Name *</label>
+                <input type="text" name="last_name" value="{{ old('last_name') }}" required
+                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="e.g. Doe">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Date of Birth *</label>
+                <input type="date" name="dob" value="{{ old('dob') }}" required
+                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Gender *</label>
+                <select name="gender" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                    <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                    <option value="Other" {{ old('gender') == 'Other' ? 'selected' : '' }}>Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Blood Type</label>
+                <select name="blood_type" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <option value="">Unknown</option>
+                    @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bt)
+                    <option value="{{ $bt }}" {{ old('blood_type') == $bt ? 'selected' : '' }}>{{ $bt }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Email Address *</label>
+                <input type="email" name="email" value="{{ old('email') }}" required
+                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="john@example.com">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+                <input type="text" name="phone" value="{{ old('phone') }}" required
+                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="+1 (555) 000-0000">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Residential Address</label>
+            <input type="text" name="address" value="{{ old('address') }}"
+                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Street Address, City, State, ZIP">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+                <input type="password" name="password" required
+                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Minimum 6 characters">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Confirm Password *</label>
+                <input type="password" name="password_confirmation" required
+                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Repeat password">
+            </div>
+        </div>
+
+        <div class="pt-4">
+            <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-cyan-600/30 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-id-card"></i> Create Account & Generate UPI
+            </button>
+        </div>
+    </form>
+
+    <div class="mt-6 text-center text-xs text-slate-500">
+        Already have a patient or staff profile? <a href="{{ route('login') }}" class="text-cyan-600 font-bold hover:underline">Log in here</a>
+    </div>
+
+</div>
+@endsection

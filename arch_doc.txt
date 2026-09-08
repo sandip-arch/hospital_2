@@ -1,0 +1,243 @@
+Hospital Management System - Database Architecture
+1. Executive Summary & Normalization Rules
+This database design adheres to Third Normal Form (3NF) standards to ensure data integrity, eliminate redundancy, and maintain performance scalability:
+1st Normal Form (1NF): All columns contain atomic (indivisible) values. Multi-valued fields (e.g., multiple phone numbers, lab report items, or prescribed drugs) have been decomposed into dedicated child tables (emergency_contacts, prescription_items, invoice_items). Every table has a defined Primary Key.
+2nd Normal Form (2NF): Every non-key attribute is fully functionally dependent on the primary key. In junction/pivot tables (role_user, permission_role), non-key attributes depend on the complete composite primary key.
+3NF / BCNF: Transitive dependencies are removed. Entity personal data (name, email, login credentials) resides in users or patients, preventing duplicate user info in functional roles like doctors or staff. Price histories are decoupled via transaction line items (invoice_items) so master pricing changes do not affect past financial transactions.
+2. Table Schemas & Attribute Definitions
+Module 1: Authentication & Authorization
+1.1 users
+Represents system user accounts across all roles.
+id (BIGINT, PK, AUTO_INCREMENT)
+username (VARCHAR(50), UNIQUE, NOT NULL)
+email (VARCHAR(100), UNIQUE, NOT NULL)
+password_hash (VARCHAR(255), NOT NULL)
+status (ENUM('active', 'inactive', 'suspended'), DEFAULT 'active')
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+updated_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)
+1.2 roles
+Defines user access levels (e.g., Admin, Doctor, Nurse, Receptionist, Patient).
+id (INT, PK, AUTO_INCREMENT)
+name (VARCHAR(50), UNIQUE, NOT NULL)
+description (TEXT, NULLABLE)
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+1.3 permissions
+Defines granular action permissions (e.g., prescribe_medicine, view_billing).
+id (INT, PK, AUTO_INCREMENT)
+name (VARCHAR(100), UNIQUE, NOT NULL)
+slug (VARCHAR(100), UNIQUE, NOT NULL)
+description (TEXT, NULLABLE)
+1.4 role_user (Junction Table)
+user_id (BIGINT, PK, FK -> users.id ON DELETE CASCADE)
+role_id (INT, PK, FK -> roles.id ON DELETE CASCADE)
+1.5 permission_role (Junction Table)
+permission_id (INT, PK, FK -> permissions.id ON DELETE CASCADE)
+role_id (INT, PK, FK -> roles.id ON DELETE CASCADE)
+Module 2: Hospital Organization
+2.1 departments
+id (INT, PK, AUTO_INCREMENT)
+name (VARCHAR(100), NOT NULL)
+code (VARCHAR(20), UNIQUE, NOT NULL)
+description (TEXT, NULLABLE)
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+2.2 doctors
+id (INT, PK, AUTO_INCREMENT)
+user_id (BIGINT, UNIQUE, FK -> users.id ON DELETE CASCADE)
+department_id (INT, FK -> departments.id ON DELETE SET NULL)
+specialization (VARCHAR(100), NOT NULL)
+license_number (VARCHAR(50), UNIQUE, NOT NULL)
+consultation_fee (DECIMAL(10,2), NOT NULL)
+phone (VARCHAR(20), NOT NULL)
+2.3 staff
+id (INT, PK, AUTO_INCREMENT)
+user_id (BIGINT, UNIQUE, FK -> users.id ON DELETE CASCADE)
+department_id (INT, FK -> departments.id ON DELETE SET NULL)
+job_title (VARCHAR(100), NOT NULL)
+phone (VARCHAR(20), NOT NULL)
+hire_date (DATE, NOT NULL)
+2.4 managers
+id (INT, PK, AUTO_INCREMENT)
+user_id (BIGINT, UNIQUE, FK -> users.id ON DELETE CASCADE)
+department_id (INT, NULLABLE, FK -> departments.id ON DELETE SET NULL)
+title (VARCHAR(100), NOT NULL)
+Module 3: Patient Management
+3.1 patients
+id (BIGINT, PK, AUTO_INCREMENT)
+user_id (BIGINT, UNIQUE, NULLABLE, FK -> users.id ON DELETE SET NULL) (Optional portal account)
+first_name (VARCHAR(50), NOT NULL)
+last_name (VARCHAR(50), NOT NULL)
+dob (DATE, NOT NULL)
+gender (ENUM('Male', 'Female', 'Other'), NOT NULL)
+blood_type (ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'), NULLABLE)
+phone (VARCHAR(20), NOT NULL)
+email (VARCHAR(100), NULLABLE)
+address (TEXT, NULLABLE)
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+3.2 emergency_contacts
+id (BIGINT, PK, AUTO_INCREMENT)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+contact_name (VARCHAR(100), NOT NULL)
+relationship (VARCHAR(50), NOT NULL)
+phone (VARCHAR(20), NOT NULL)
+alt_phone (VARCHAR(20), NULLABLE)
+3.3 patient_documents
+id (BIGINT, PK, AUTO_INCREMENT)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+document_type (VARCHAR(50), NOT NULL) (e.g., Insurance, ID Card, X-Ray)
+file_path (VARCHAR(255), NOT NULL)
+uploaded_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+Module 4: Appointments
+4.1 appointments
+id (BIGINT, PK, AUTO_INCREMENT)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+doctor_id (INT, FK -> doctors.id ON DELETE CASCADE)
+department_id (INT, FK -> departments.id ON DELETE CASCADE)
+appointment_date (DATE, NOT NULL)
+time_slot (TIME, NOT NULL)
+status (ENUM('scheduled', 'completed', 'cancelled', 'no_show'), DEFAULT 'scheduled')
+reason (TEXT, NULLABLE)
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+4.2 doctor_availabilities
+id (INT, PK, AUTO_INCREMENT)
+doctor_id (INT, FK -> doctors.id ON DELETE CASCADE)
+day_of_week (ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), NOT NULL)
+start_time (TIME, NOT NULL)
+end_time (TIME, NOT NULL)
+is_available (BOOLEAN, DEFAULT TRUE)
+Module 5: Medical
+5.1 medical_records
+id (BIGINT, PK, AUTO_INCREMENT)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+doctor_id (INT, FK -> doctors.id ON DELETE CASCADE)
+appointment_id (BIGINT, NULLABLE, FK -> appointments.id ON DELETE SET NULL)
+visit_date (DATETIME, NOT NULL)
+diagnosis (TEXT, NOT NULL)
+symptoms (TEXT, NULLABLE)
+notes (TEXT, NULLABLE)
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+5.2 medical_record_details
+Stores vital signs and clinical observations for a medical record.
+id (BIGINT, PK, AUTO_INCREMENT)
+medical_record_id (BIGINT, FK -> medical_records.id ON DELETE CASCADE)
+vital_sign_name (VARCHAR(50), NOT NULL) (e.g., Blood Pressure, Heart Rate, SpO2)
+vital_sign_value (VARCHAR(50), NOT NULL)
+5.3 prescriptions
+id (BIGINT, PK, AUTO_INCREMENT)
+medical_record_id (BIGINT, FK -> medical_records.id ON DELETE CASCADE)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+doctor_id (INT, FK -> doctors.id ON DELETE CASCADE)
+prescribed_date (DATE, NOT NULL)
+notes (TEXT, NULLABLE)
+5.4 medicines
+id (INT, PK, AUTO_INCREMENT)
+name (VARCHAR(100), NOT NULL)
+generic_name (VARCHAR(100), NULLABLE)
+category (VARCHAR(50), NOT NULL)
+unit_price (DECIMAL(10,2), NOT NULL)
+stock_quantity (INT, DEFAULT 0)
+5.5 prescription_items
+id (BIGINT, PK, AUTO_INCREMENT)
+prescription_id (BIGINT, FK -> prescriptions.id ON DELETE CASCADE)
+medicine_id (INT, FK -> medicines.id ON DELETE RESTRICT)
+dosage (VARCHAR(50), NOT NULL) (e.g., "500mg")
+frequency (VARCHAR(50), NOT NULL) (e.g., "Twice daily after meals")
+duration_days (INT, NOT NULL)
+instructions (TEXT, NULLABLE)
+5.6 lab_tests
+id (INT, PK, AUTO_INCREMENT)
+test_name (VARCHAR(100), NOT NULL)
+code (VARCHAR(20), UNIQUE, NOT NULL)
+description (TEXT, NULLABLE)
+cost (DECIMAL(10,2), NOT NULL)
+5.7 lab_reports
+id (BIGINT, PK, AUTO_INCREMENT)
+medical_record_id (BIGINT, FK -> medical_records.id ON DELETE CASCADE)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+lab_test_id (INT, FK -> lab_tests.id ON DELETE RESTRICT)
+doctor_id (INT, FK -> doctors.id ON DELETE CASCADE)
+status (ENUM('requested', 'in_progress', 'completed', 'cancelled'), DEFAULT 'requested')
+result_summary (TEXT, NULLABLE)
+file_path (VARCHAR(255), NULLABLE)
+report_date (DATETIME, NULLABLE)
+Module 6: Hospital Facilities
+6.1 rooms
+id (INT, PK, AUTO_INCREMENT)
+room_number (VARCHAR(20), UNIQUE, NOT NULL)
+room_type (ENUM('ICU', 'Private', 'Semi-Private', 'General Ward', 'Operating Theater'), NOT NULL)
+department_id (INT, FK -> departments.id ON DELETE CASCADE)
+daily_rate (DECIMAL(10,2), NOT NULL)
+status (ENUM('available', 'full', 'maintenance'), DEFAULT 'available')
+6.2 beds
+id (INT, PK, AUTO_INCREMENT)
+room_id (INT, FK -> rooms.id ON DELETE CASCADE)
+bed_number (VARCHAR(20), NOT NULL)
+status (ENUM('available', 'occupied', 'cleaning', 'maintenance'), DEFAULT 'available')
+6.3 admissions
+id (BIGINT, PK, AUTO_INCREMENT)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+bed_id (INT, FK -> beds.id ON DELETE RESTRICT)
+doctor_id (INT, FK -> doctors.id ON DELETE CASCADE)
+admission_date (DATETIME, NOT NULL)
+discharge_date (DATETIME, NULLABLE)
+status (ENUM('admitted', 'discharged', 'transferred'), DEFAULT 'admitted')
+Module 7: Billing
+7.1 invoices
+id (BIGINT, PK, AUTO_INCREMENT)
+patient_id (BIGINT, FK -> patients.id ON DELETE CASCADE)
+admission_id (BIGINT, NULLABLE, FK -> admissions.id ON DELETE SET NULL)
+invoice_date (DATE, NOT NULL)
+due_date (DATE, NOT NULL)
+total_amount (DECIMAL(10,2), NOT NULL, DEFAULT 0.00)
+discount_amount (DECIMAL(10,2), DEFAULT 0.00)
+tax_amount (DECIMAL(10,2), DEFAULT 0.00)
+net_amount (DECIMAL(10,2), NOT NULL, DEFAULT 0.00)
+status (ENUM('unpaid', 'partially_paid', 'paid', 'cancelled'), DEFAULT 'unpaid')
+7.2 invoice_items
+id (BIGINT, PK, AUTO_INCREMENT)
+invoice_id (BIGINT, FK -> invoices.id ON DELETE CASCADE)
+item_description (VARCHAR(255), NOT NULL)
+quantity (INT, NOT NULL, DEFAULT 1)
+unit_price (DECIMAL(10,2), NOT NULL)
+subtotal (DECIMAL(10,2), NOT NULL)
+7.3 payments
+id (BIGINT, PK, AUTO_INCREMENT)
+invoice_id (BIGINT, FK -> invoices.id ON DELETE CASCADE)
+payment_date (DATETIME, DEFAULT CURRENT_TIMESTAMP)
+amount_paid (DECIMAL(10,2), NOT NULL)
+payment_method (ENUM('cash', 'credit_card', 'debit_card', 'insurance', 'upi', 'bank_transfer'), NOT NULL)
+transaction_reference (VARCHAR(100), NULLABLE)
+status (ENUM('completed', 'failed', 'refunded'), DEFAULT 'completed')
+Module 8: Communication
+8.1 notifications
+id (BIGINT, PK, AUTO_INCREMENT)
+user_id (BIGINT, FK -> users.id ON DELETE CASCADE)
+title (VARCHAR(150), NOT NULL)
+message (TEXT, NOT NULL)
+type (ENUM('appointment', 'billing', 'lab_result', 'system'), NOT NULL)
+is_read (BOOLEAN, DEFAULT FALSE)
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+8.2 messages
+id (BIGINT, PK, AUTO_INCREMENT)
+sender_id (BIGINT, FK -> users.id ON DELETE CASCADE)
+receiver_id (BIGINT, FK -> users.id ON DELETE CASCADE)
+message_body (TEXT, NOT NULL)
+sent_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+is_read (BOOLEAN, DEFAULT FALSE)
+Module 9: System
+9.1 audit_logs
+id (BIGINT, PK, AUTO_INCREMENT)
+user_id (BIGINT, NULLABLE, FK -> users.id ON DELETE SET NULL)
+action (VARCHAR(100), NOT NULL) (e.g., CREATE, UPDATE, DELETE, LOGIN)
+table_name (VARCHAR(50), NULLABLE)
+record_id (BIGINT, NULLABLE)
+ip_address (VARCHAR(45), NULLABLE)
+created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+9.2 system_settings
+id (INT, PK, AUTO_INCREMENT)
+setting_key (VARCHAR(100), UNIQUE, NOT NULL)
+setting_value (TEXT, NOT NULL)
+description (TEXT, NULLABLE)
+updated_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)
+3. Visual ER Diagram (Mermaid Standard)
+Below is the Mermaid ER diagram representing the entities, keys, and functional relationships:
+erDiagram    users ||--o{ role_user : "has"    roles ||--o{ role_user : "assigned to"    roles ||--o{ permission_role : "has"    permissions ||--o{ permission_role : "granted to"    users ||--o| doctors : "profile"    users ||--o| staff : "profile"    users ||--o| managers : "profile"    users ||--o| patients : "optional portal account"    users ||--o{ notifications : "receives"    users ||--o{ messages : "sends/receives"    users ||--o{ audit_logs : "triggers"    departments ||--o{ doctors : "employs"    departments ||--o{ staff : "employs"    departments ||--o{ managers : "manages"    departments ||--o{ rooms : "houses"    departments ||--o{ appointments : "hosts"    doctors ||--o{ doctor_availabilities : "defines"    doctors ||--o{ appointments : "attends"    doctors ||--o{ medical_records : "creates"    doctors ||--o{ prescriptions : "prescribes"    doctors ||--o{ lab_reports : "orders"    doctors ||--o{ admissions : "attends"    patients ||--o{ emergency_contacts : "has"    patients ||--o{ patient_documents : "owns"    patients ||--o{ appointments : "books"    patients ||--o{ medical_records : "has history"    patients ||--o{ prescriptions : "receives"    patients ||--o{ lab_reports : "undergoes"    patients ||--o{ admissions : "admitted as"    patients ||--o{ invoices : "billed via"    appointments ||--o| medical_records : "results in"    medical_records ||--o{ medical_record_details : "contains"    medical_records ||--o{ prescriptions : "generates"    medical_records ||--o{ lab_reports : "triggers"    prescriptions ||--o{ prescription_items : "includes"    medicines ||--o{ prescription_items : "used in"    lab_tests ||--o{ lab_reports : "categorizes"    rooms ||--o{ beds : "contains"    beds ||--o{ admissions : "assigned to"    admissions ||--o| invoices : "generates"    invoices ||--o{ invoice_items : "contains"    invoices ||--o{ payments : "settled by"

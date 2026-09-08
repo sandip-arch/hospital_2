@@ -1,0 +1,183 @@
+Hospital Management System (HMS) — Features & RBAC Requirements
+1. Core Hospital Management System Modules & Features
+To efficiently operate a hospital, a system must handle clinical, administrative, operational, and financial workflows. Below are the 10 core modules and their essential features:
+1. User & Access Control Management
+User Management: Registration, authentication, multi-factor authentication (MFA), password resets.
+Role-Based Access Control (RBAC): Defining roles, assigning permissions, managing access levels.
+Audit Trail & Logging: Tracking user logins, critical data edits, and compliance logging.
+2. Patient Management (ADT — Admission, Discharge, Transfer)
+Patient Registration: Capturing personal info, emergency contacts, insurance details, and documents.
+Medical Identity: Unique Patient Identification (UPI) generation.
+Outpatient & Inpatient Tracking: Managing OPD visits, hospital admissions, transfers, and discharge summaries.
+3. Doctor & Clinical Management (EMR / EHR)
+Digital Consultation Notes: SOAP (Subjective, Objective, Assessment, Plan) notes, diagnosis coding.
+Electronic Prescriptions (e-Prescribing): Standardized drug dosage, duration, and instructions.
+Order Entry: Ordering lab tests, radiology scans, and procedures.
+4. Appointment & Scheduling Management
+Doctor Roster & Availability: Managing shifts, time slots, and leave calendars.
+Booking Engine: Online/counter appointment booking, rescheduling, and cancellations.
+Queue Management: Real-time patient queue tracking in waiting areas.
+5. Hospital Facilities & Bed Management
+Ward & Room Directory: Categorization of ICU, Private, Semi-Private, and General wards.
+Bed Tracker: Real-time visibility of available, occupied, cleaning, or maintenance beds.
+Admissions & Transfers: Seamless bed assignment for admitted patients.
+6. Laboratory & Diagnostics Management
+Test Catalog & Pricing: List of available lab tests and radiology scans.
+Sample Tracking & Processing: Status updates (requested -> in_progress -> completed).
+Report Generation & Upload: Attaching lab test reports and digital radiology files.
+7. Pharmacy & Inventory Management
+Drug Master Catalog: Medicine listings with unit pricing, categories, and generic names.
+Stock & Inventory Control: Low-stock alerts, expiration tracking, stock batching.
+Prescription Fulfilling: Direct integration with doctor prescriptions for dispensing.
+8. Billing & Financial Management
+Consolidated Invoicing: Automated itemized charges (consultation, room daily rates, lab, medicine).
+Payment Processing: Support for cash, credit/debit cards, UPI, and bank transfers.
+Insurance & Claims: Tracking claim status and partial patient payments.
+9. Communication & Notifications
+Alert System: Automated SMS/Email/In-App reminders for appointments, bills, and lab results.
+Internal Messaging: Secure communication channels between doctors and staff.
+10. System Administration & Analytics
+Master Configurations: Setting department lists, tax rates, operational hours.
+Executive Dashboards: Revenue reports, bed occupancy rates, patient throughput metrics.
+2. Overview of System Roles
+superadmin: System administrator responsible for system configuration, user provision, security policies, and high-level reporting.
+doctors: Healthcare providers focused on diagnosing patients, prescribing treatments, reviewing lab tests, and managing clinical notes.
+staff: Operational and clinical support teams (Nurses, Receptionists, Pharmacists, Lab Technicians, Cashiers).
+patients: Individuals receiving care who access their personal health records, appointments, and billing via a patient portal.
+users: Unverified or prospective users (e.g., guest visitors registered on the portal before being verified or linked to a patient profile).
+3. Role-Based Access Control (RBAC) Matrix
+Legend:
+C = Create
+R = Read / View
+U = Update / Edit
+D = Delete
+- = No Access
+Feature / Module
+Superadmin
+Doctors
+Staff
+Patients
+Users
+System Settings & Configuration
+CRUD
+-
+-
+-
+-
+User & Role Management
+CRUD
+-
+-
+-
+-
+Audit Logs & Reports
+R
+-
+-
+-
+-
+Department & Facility Setup
+CRUD
+R
+R
+R
+R
+Doctor Schedules & Availability
+CRUD
+CRU
+R
+R
+R
+Patient Registration & Demographics
+CRUD
+R
+CRU
+U (Own)
+-
+Appointments (Booking & Status)
+CRUD
+CRU
+CRU
+CRU (Own)
+C (Request)
+EHR / Clinical Records
+CRUD
+CRUD
+RU
+R (Own)
+-
+Prescriptions
+CRUD
+CRUD
+R (Fulfill)
+R (Own)
+-
+Lab Tests & Reports
+CRUD
+CRU
+CRU (Tech)
+R (Own)
+-
+Bed Allocation & Admissions
+CRUD
+R
+CRU
+R (Own)
+-
+Billing & Invoices
+CRUD
+R
+CRU
+R (Own)
+-
+Pharmacy & Medicine Stock
+CRUD
+R
+CRU (Pharm)
+-
+-
+Notifications & Messages
+CRUD
+CRU
+CRU
+CRU (Own)
+R
+4. Role Responsibility Breakdown
+1. Superadmin
+Primary Objective: Ensure platform operational security, compliance, and system integrity.
+Managed Features:
+Manage system users, roles, and granular permissions (role_user, permission_role).
+Configure hospital departments, fee structures, tax settings, and system defaults.
+Access security audit logs, user login activities, and hospital-wide analytical reports.
+Oversee master data setup (medicines master list, lab test catalogs).
+2. Doctors
+Primary Objective: Provide clinical care, diagnose conditions, and prescribe medical regimens.
+Managed Features:
+Set and adjust personal consultation time slots and weekly availabilities.
+Review assigned daily appointment schedules and queue status.
+View complete clinical history of assigned patients.
+Create diagnosis entries, record vital sign observations, write clinical notes, and order lab tests.
+Issue e-prescriptions detailing dosages, duration, and instructions.
+Authorize patient admission and discharge orders.
+3. Staff (Sub-role Functionalities)
+Primary Objective: Facilitate day-to-day administrative, clinical support, and financial operations.
+Managed Features by Staff Sub-Roles:
+Receptionist / Front Desk: Register new patients, handle walk-in bookings, manage appointment check-ins.
+Nurses: Record patient vitals, monitor bed assignments, manage ward duty lists.
+Lab Technicians: Receive lab test requests, input test parameters, attach diagnostic file reports.
+Pharmacists: Review prescriptions, verify drug stock, update inventory quantities, dispense drugs.
+Billing Desk / Cashier: Generate combined patient invoices, collect payments across payment channels, issue receipts.
+4. Patients
+Primary Objective: Engage with personal health details, book appointments, and settle medical bills.
+Managed Features:
+View personal profile, medical documents, and emergency contacts.
+Search doctor directories by department/specialization and schedule appointments.
+View historical medical records, diagnosis summaries, and doctor prescriptions.
+Access lab test results as soon as they are published.
+View invoice breakdowns and pay outstanding fees online.
+5. Users (Guest / Unverified Accounts)
+Primary Objective: Basic portal navigation prior to patient profile verification.
+Managed Features:
+View public hospital information, available departments, and listed doctors.
+Self-register for an account on the public portal.
+Submit a request to book an initial appointment or request profile linking to an existing offline patient record.
