@@ -113,7 +113,34 @@ class FacilityController extends Controller
             abort(403, 'Unauthorized. Only medical and nursing staff can discharge patients.');
         }
 
-        $admission = Admission::with('bed.room')->findOrFail($id);
+        // 1. Resolve admission by Admission ID first
+        $admission = Admission::with(['bed.room', 'invoice'])->find($id);
+
+        // 2. If not found by Admission ID, attempt resolution as Bed ID (or via request payload)
+        if (!$admission) {
+            $targetBedId = $id ?: $request->input('bed_id');
+            $bed = Bed::with('room')->find($targetBedId);
+
+            if ($bed) {
+                $admission = $bed->currentAdmission;
+
+                // Handle case where bed is marked occupied without an active admission record
+                if (!$admission && $bed->status === 'occupied') {
+                    $bed->update(['status' => 'cleaning']);
+                    AuditService::log('DISCHARGE', 'beds', $bed->id, "Released occupied Bed #{$bed->bed_number} (Room {$bed->room->room_number}) to cleaning");
+                    return back()->with('success', "Bed #{$bed->bed_number} released and marked for cleaning.");
+                }
+            }
+        }
+
+        if (!$admission) {
+            return back()->with('error', 'Active inpatient admission record not found.');
+        }
+
+        // 3. Prevent discharging an already discharged admission (graceful error handling)
+        if ($admission->status !== 'admitted') {
+            return back()->with('error', "Admission #ADM-{$admission->id} is already {$admission->status} and cannot be discharged again.");
+        }
 
         $validated = $request->validate([
             'discharge_notes' => 'nullable|string',
@@ -126,17 +153,19 @@ class FacilityController extends Controller
             'discharge_notes' => $validated['discharge_notes'] ?? 'Patient clinically stable for discharge.',
         ]);
 
-        // Set bed to cleaning
-        $admission->bed->update(['status' => 'cleaning']);
+        // 4. Set bed to cleaning
+        if ($admission->bed) {
+            $admission->bed->update(['status' => 'cleaning']);
+        }
 
-        // Generate final admission invoice
-        if ($request->boolean('generate_invoice', true)) {
+        // 5. Generate final admission invoice if requested and not yet generated
+        if ($request->boolean('generate_invoice', true) && !$admission->invoice) {
             BillingService::createForAdmission($admission);
         }
 
         AuditService::log('DISCHARGE', 'admissions', $admission->id, "Discharged patient from Admission #{$admission->id}");
 
-        return back()->with('success', 'Patient has been discharged and final billing invoice generated.');
+        return back()->with('success', 'Patient has been discharged and bed marked for cleaning.');
     }
 
     public function updateBedStatus(Request $request, $bedId)

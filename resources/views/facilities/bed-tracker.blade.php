@@ -119,10 +119,23 @@
                             
                             <div class="pt-2 flex items-center justify-between">
                                 <span class="text-[10px] text-slate-400 font-semibold">{{ $bed->currentAdmission->stay_days }}d Stay</span>
-                                <button @click="selectedAdmissionId = {{ $bed->currentAdmission->id }}; selectedPatientName = '{{ addslashes($bed->currentAdmission->patient->full_name) }}'; dischargeModal = true"
+                                <button type="button" @click="selectedAdmissionId = {{ $bed->currentAdmission->id }}; selectedPatientName = '{{ addslashes($bed->currentAdmission->patient->full_name) }}'; dischargeModal = true"
                                         class="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[10px] font-bold shadow-xs">
                                     Discharge
                                 </button>
+                            </div>
+                        </div>
+                        @else
+                        <div class="mt-2 space-y-1 text-[11px]">
+                            <p class="font-bold text-rose-700">Occupied (Bed Held)</p>
+                            <p class="text-slate-400 text-[10px]">No linked patient record</p>
+                            <div class="pt-2">
+                                <form action="{{ route('facilities.discharge', $bed->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="w-full py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[10px] font-bold shadow-xs">
+                                        Release Bed
+                                    </button>
+                                </form>
                             </div>
                         </div>
                         @endif
@@ -216,9 +229,6 @@
                     <button type="button" @click="admitModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancel</button>
                     <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md">{{ Auth::user()->isPatient() ? 'Submit Request' : 'Confirm Admission' }}</button>
                 </div>
-            </form>
-        </div>
-    </div>
             </form>
         </div>
     </div>

@@ -27,7 +27,7 @@ class Bed extends Model
 
     public function currentAdmission(): HasOne
     {
-        return $this->hasOne(Admission::class)->where('status', 'admitted');
+        return $this->hasOne(Admission::class)->where('status', 'admitted')->latestOfMany();
     }
 
     public function getStatusBadgeAttribute(): string
