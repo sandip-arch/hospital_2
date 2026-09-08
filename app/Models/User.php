@@ -144,6 +144,52 @@ class User extends Authenticatable
         return $this->hasRole('patient');
     }
 
+    public function isReceptionist(): bool
+    {
+        return $this->isStaff() && $this->staff && (
+            stripos($this->staff->job_title ?? '', 'receptionist') !== false ||
+            stripos($this->staff->job_title ?? '', 'front desk') !== false
+        );
+    }
+
+    public function canDischargeAdmission(?Admission $admission): bool
+    {
+        if (!$admission) {
+            return false;
+        }
+
+        // 1. Superadmin or Hospital Admin
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // 2. The specific attending doctor under whom the patient booked / was admitted
+        if ($this->isDoctor() && $this->doctor && (int)$this->doctor->id === (int)$admission->doctor_id) {
+            return true;
+        }
+
+        // 3. Receptionist / Front Desk staff
+        if ($this->isReceptionist()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function canReleaseBed(?Bed $bed): bool
+    {
+        if (!$bed) {
+            return false;
+        }
+
+        if ($bed->currentAdmission) {
+            return $this->canDischargeAdmission($bed->currentAdmission);
+        }
+
+        // For direct bed holds with no linked patient admission
+        return $this->isAdmin() || $this->isReceptionist() || $this->isDoctor();
+    }
+
     public function primaryRole(): string
     {
         $role = $this->roles->first();

@@ -67,7 +67,7 @@
                             </span>
                         </td>
                         <td class="py-4 px-6 text-right">
-                            @if($adm->status === 'admitted' && !Auth::user()->isPatient())
+                            @if($adm->status === 'admitted' && Auth::user()->canDischargeAdmission($adm))
                             <form action="{{ route('facilities.discharge', $adm->id) }}" method="POST" onsubmit="return confirm('Confirm discharge for {{ addslashes($adm->patient->full_name) }}?');" class="inline-block">
                                 @csrf
                                 <input type="hidden" name="discharge_notes" value="Discharged from inpatient registry.">

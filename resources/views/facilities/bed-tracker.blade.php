@@ -119,16 +119,21 @@
                             
                             <div class="pt-2 flex items-center justify-between">
                                 <span class="text-[10px] text-slate-400 font-semibold">{{ $bed->currentAdmission->stay_days }}d Stay</span>
+                                @if(Auth::user()->canDischargeAdmission($bed->currentAdmission))
                                 <button type="button" @click="selectedAdmissionId = {{ $bed->currentAdmission->id }}; selectedPatientName = '{{ addslashes($bed->currentAdmission->patient->full_name) }}'; dischargeModal = true"
                                         class="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[10px] font-bold shadow-xs">
                                     Discharge
                                 </button>
+                                @else
+                                <span class="text-[9px] text-slate-400 font-medium italic">Dr. {{ $bed->currentAdmission->doctor?->user?->name ?? 'Specialist' }}</span>
+                                @endif
                             </div>
                         </div>
                         @else
                         <div class="mt-2 space-y-1 text-[11px]">
                             <p class="font-bold text-rose-700">Occupied (Bed Held)</p>
                             <p class="text-slate-400 text-[10px]">No linked patient record</p>
+                            @if(Auth::user()->canReleaseBed($bed))
                             <div class="pt-2">
                                 <form action="{{ route('facilities.discharge', $bed->id) }}" method="POST">
                                     @csrf
@@ -137,6 +142,7 @@
                                     </button>
                                 </form>
                             </div>
+                            @endif
                         </div>
                         @endif
                     @elseif($bed->status === 'available')

@@ -119,13 +119,16 @@ class FacilityController extends Controller
         // 2. If not found by Admission ID, attempt resolution as Bed ID (or via request payload)
         if (!$admission) {
             $targetBedId = $id ?: $request->input('bed_id');
-            $bed = Bed::with('room')->find($targetBedId);
+            $bed = Bed::with(['room', 'currentAdmission'])->find($targetBedId);
 
             if ($bed) {
                 $admission = $bed->currentAdmission;
 
                 // Handle case where bed is marked occupied without an active admission record
                 if (!$admission && $bed->status === 'occupied') {
+                    if (!$user->canReleaseBed($bed)) {
+                        abort(403, 'Unauthorized. Only the assigned doctor, a receptionist, or an administrator can release this bed.');
+                    }
                     $bed->update(['status' => 'cleaning']);
                     AuditService::log('DISCHARGE', 'beds', $bed->id, "Released occupied Bed #{$bed->bed_number} (Room {$bed->room->room_number}) to cleaning");
                     return back()->with('success', "Bed #{$bed->bed_number} released and marked for cleaning.");
@@ -135,6 +138,11 @@ class FacilityController extends Controller
 
         if (!$admission) {
             return back()->with('error', 'Active inpatient admission record not found.');
+        }
+
+        // Strict Role Authorization: Only Superadmin, Admin, Receptionist, or the Assigned Attending Doctor
+        if (!$user->canDischargeAdmission($admission)) {
+            abort(403, 'Unauthorized. Only the assigned attending doctor (' . ($admission->doctor?->full_name ?? 'Doctor') . '), a receptionist, or an administrator can discharge this patient.');
         }
 
         // 3. Prevent discharging an already discharged admission (graceful error handling)
