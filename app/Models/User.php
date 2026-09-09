@@ -77,6 +77,11 @@ class User extends Authenticatable
         return $this->hasOne(Patient::class);
     }
 
+    public function ambulanceDriver(): HasOne
+    {
+        return $this->hasOne(AmbulanceDriver::class);
+    }
+
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);

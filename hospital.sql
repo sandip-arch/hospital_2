@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 08, 2026 at 01:34 PM
+-- Generation Time: Sep 09, 2026 at 09:02 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -53,6 +53,77 @@ INSERT INTO `admissions` (`id`, `patient_id`, `bed_id`, `doctor_id`, `admission_
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ambulances`
+--
+
+CREATE TABLE `ambulances` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `vehicle_number` varchar(20) NOT NULL,
+  `model` varchar(100) NOT NULL,
+  `type` enum('Basic','Advanced_Life_Support','Patient_Transport') NOT NULL,
+  `current_driver_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` enum('available','dispatched','in_transit','maintenance') NOT NULL DEFAULT 'available',
+  `current_latitude` decimal(10,7) DEFAULT NULL,
+  `current_longitude` decimal(10,7) DEFAULT NULL,
+  `last_location_update` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ambulance_bookings`
+--
+
+CREATE TABLE `ambulance_bookings` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `ambulance_id` bigint(20) UNSIGNED NOT NULL,
+  `driver_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `contact_phone` varchar(20) NOT NULL,
+  `pickup_address` text NOT NULL,
+  `pickup_latitude` decimal(10,7) NOT NULL,
+  `pickup_longitude` decimal(10,7) NOT NULL,
+  `destination_hospital_department_id` int(10) UNSIGNED DEFAULT NULL,
+  `booking_status` enum('requested','assigned','en_route','arrived','completed','cancelled') NOT NULL DEFAULT 'requested',
+  `booking_time` timestamp NOT NULL DEFAULT current_timestamp(),
+  `completed_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ambulance_drivers`
+--
+
+CREATE TABLE `ambulance_drivers` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `license_number` varchar(50) NOT NULL,
+  `contact_number` varchar(20) NOT NULL,
+  `status` enum('on_duty','off_duty') NOT NULL DEFAULT 'off_duty',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ambulance_location_logs`
+--
+
+CREATE TABLE `ambulance_location_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `ambulance_id` bigint(20) UNSIGNED NOT NULL,
+  `booking_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `latitude` decimal(10,7) NOT NULL,
+  `longitude` decimal(10,7) NOT NULL,
+  `recorded_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `appointments`
 --
 
@@ -88,7 +159,8 @@ INSERT INTO `appointments` (`id`, `patient_id`, `doctor_id`, `department_id`, `a
 (11, 9, 4, 4, '2026-09-03', '03:00 PM', 'completed', 'Chronic lower back pain radiating down left posterior thigh.', 'SLR test positive at 45 degrees left. Ordered Lumbar Spine MRI.', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
 (12, 1, 1, 1, '2026-09-14', '10:00 AM', 'scheduled', 'Post-treatment lipid profile check & medication review.', NULL, '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
 (13, 3, 1, 1, '2026-09-12', '11:00 AM', 'scheduled', 'Post-discharge recovery check & cardiac rehab orientation.', NULL, '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
-(14, 5, 4, 4, '2026-09-10', '02:30 PM', 'scheduled', 'Intra-articular hyaluronic acid injection follow-up.', NULL, '2026-09-07 09:46:09', '2026-09-07 09:46:09');
+(14, 5, 4, 4, '2026-09-10', '02:30 PM', 'scheduled', 'Intra-articular hyaluronic acid injection follow-up.', NULL, '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
+(15, 1, 1, 1, '2026-09-08', '09:00 AM', 'scheduled', NULL, NULL, '2026-09-08 09:23:17', '2026-09-08 09:23:17');
 
 -- --------------------------------------------------------
 
@@ -127,7 +199,24 @@ INSERT INTO `audit_logs` (`id`, `user_id`, `action`, `table_name`, `record_id`, 
 (13, 2, 'LOGIN', 'users', 2, '127.0.0.1', 'Demo 1-Click login as admin', '2026-09-07 10:01:20'),
 (14, 2, 'UPDATE', 'system_settings', NULL, '127.0.0.1', 'Updated hospital system configuration settings', '2026-09-07 10:01:51'),
 (15, 2, 'LOGOUT', 'users', 2, '127.0.0.1', 'User logged out', '2026-09-07 10:02:08'),
-(16, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-07 10:02:11');
+(16, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-07 10:02:11'),
+(17, 3, 'LOGIN', 'users', 3, '127.0.0.1', 'Demo 1-Click login as doctor', '2026-09-08 09:18:50'),
+(18, 3, 'UPDATE', 'doctor_availabilities', 1, '127.0.0.1', 'Updated weekly roster availability for Dr. Dr. Sarah Jenkins', '2026-09-08 09:19:18'),
+(19, 3, 'LOGOUT', 'users', 3, '127.0.0.1', 'User logged out', '2026-09-08 09:20:51'),
+(20, 12, 'LOGIN', 'users', 12, '127.0.0.1', 'Demo 1-Click login as patient', '2026-09-08 09:21:01'),
+(21, 12, 'CREATE', 'invoices', 4, '127.0.0.1', 'Generated consultation invoice #INV-20260908-0001', '2026-09-08 09:23:17'),
+(22, 12, 'CREATE', 'appointments', 15, '127.0.0.1', 'Booked appointment for Patient ID 1 with Doctor ID 1', '2026-09-08 09:23:17'),
+(23, 12, 'LOGOUT', 'users', 12, '127.0.0.1', 'User logged out', '2026-09-08 09:23:39'),
+(24, 9, 'LOGIN', 'users', 9, '127.0.0.1', 'Demo 1-Click login as pharmacist', '2026-09-08 09:23:44'),
+(25, 9, 'LOGOUT', 'users', 9, '127.0.0.1', 'User logged out', '2026-09-08 09:24:34'),
+(26, 3, 'LOGIN', 'users', 3, '127.0.0.1', 'Demo 1-Click login as doctor', '2026-09-08 09:24:43'),
+(27, 3, 'LOGOUT', 'users', 3, '127.0.0.1', 'User logged out', '2026-09-08 09:25:49'),
+(28, 9, 'LOGIN', 'users', 9, '127.0.0.1', 'Demo 1-Click login as pharmacist', '2026-09-08 09:26:06'),
+(29, 11, 'LOGIN', 'users', 11, '127.0.0.1', 'Demo 1-Click login as cashier', '2026-09-08 09:26:10'),
+(30, 11, 'LOGIN', 'users', 11, '127.0.0.1', 'Demo 1-Click login as cashier', '2026-09-08 09:26:29'),
+(31, 11, 'UPDATE', 'beds', 5, '127.0.0.1', 'Updated Bed #B1 status to available', '2026-09-08 09:26:43'),
+(32, 11, 'DISPENSE', 'prescriptions', 2, '127.0.0.1', 'Dispensed medication for Prescription #2', '2026-09-08 09:55:07'),
+(33, 11, 'DISPENSE', 'prescriptions', 4, '127.0.0.1', 'Dispensed medication for Prescription #4', '2026-09-08 10:05:58');
 
 -- --------------------------------------------------------
 
@@ -153,7 +242,7 @@ INSERT INTO `beds` (`id`, `room_id`, `bed_number`, `status`, `created_at`, `upda
 (2, 1, 'B2', 'cleaning', '2026-09-07 09:45:56', '2026-09-07 09:46:09'),
 (3, 1, 'B3', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (4, 1, 'B4', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
-(5, 2, 'B1', 'maintenance', '2026-09-07 09:45:56', '2026-09-07 09:46:09'),
+(5, 2, 'B1', 'available', '2026-09-07 09:45:56', '2026-09-08 09:26:43'),
 (6, 2, 'B2', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (7, 2, 'B3', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (8, 2, 'B4', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
@@ -284,11 +373,11 @@ CREATE TABLE `doctor_availabilities` (
 --
 
 INSERT INTO `doctor_availabilities` (`id`, `doctor_id`, `day_of_week`, `start_time`, `end_time`, `is_available`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Monday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-07 09:45:58'),
-(2, 1, 'Tuesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-07 09:45:58'),
-(3, 1, 'Wednesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-07 09:45:58'),
-(4, 1, 'Thursday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-07 09:45:58'),
-(5, 1, 'Friday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-07 09:45:58'),
+(1, 1, 'Monday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-08 09:19:18'),
+(2, 1, 'Tuesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-08 09:19:18'),
+(3, 1, 'Wednesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-08 09:19:18'),
+(4, 1, 'Thursday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-08 09:19:18'),
+(5, 1, 'Friday', '09:00:00', '17:00:00', 1, '2026-09-07 09:45:58', '2026-09-08 09:19:18'),
 (6, 2, 'Monday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:00', '2026-09-07 09:46:00'),
 (7, 2, 'Tuesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:00', '2026-09-07 09:46:00'),
 (8, 2, 'Wednesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:00', '2026-09-07 09:46:00'),
@@ -303,7 +392,9 @@ INSERT INTO `doctor_availabilities` (`id`, `doctor_id`, `day_of_week`, `start_ti
 (17, 4, 'Tuesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:02', '2026-09-07 09:46:02'),
 (18, 4, 'Wednesday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:02', '2026-09-07 09:46:02'),
 (19, 4, 'Thursday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:02', '2026-09-07 09:46:02'),
-(20, 4, 'Friday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:02', '2026-09-07 09:46:02');
+(20, 4, 'Friday', '09:00:00', '17:00:00', 1, '2026-09-07 09:46:02', '2026-09-07 09:46:02'),
+(21, 1, 'Saturday', '09:00:00', '17:00:00', 1, '2026-09-08 09:19:18', '2026-09-08 09:19:18'),
+(22, 1, 'Sunday', '09:00:00', '17:00:00', 0, '2026-09-08 09:19:18', '2026-09-08 09:19:18');
 
 -- --------------------------------------------------------
 
@@ -385,7 +476,8 @@ CREATE TABLE `invoices` (
 INSERT INTO `invoices` (`id`, `invoice_number`, `patient_id`, `admission_id`, `appointment_id`, `invoice_date`, `due_date`, `total_amount`, `discount_amount`, `tax_amount`, `net_amount`, `status`, `notes`, `created_at`, `updated_at`) VALUES
 (1, 'INV-2026-0001', 1, NULL, 6, '2026-08-24', '2026-08-31', 225.00, 0.00, 11.25, 236.25, 'paid', 'Cardiology Consultation + Lipid Profile + 12-Lead ECG Package.', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (2, 'INV-2026-0002', 3, 1, NULL, '2026-09-06', '2026-09-14', 1575.00, 100.00, 73.75, 1548.75, 'partially_paid', 'Inpatient ICU 101 telemetry care, Troponin I assay, Digital Chest X-Ray.', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
-(3, 'INV-2026-0003', 2, NULL, 7, '2026-08-28', '2026-09-11', 150.00, 0.00, 7.50, 157.50, 'unpaid', 'Neurology Specialist Consultation - Dr. James Wilson.', '2026-09-07 09:46:10', '2026-09-07 09:46:10');
+(3, 'INV-2026-0003', 2, NULL, 7, '2026-08-28', '2026-09-11', 150.00, 0.00, 7.50, 157.50, 'unpaid', 'Neurology Specialist Consultation - Dr. James Wilson.', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
+(4, 'INV-20260908-0001', 1, NULL, 15, '2026-09-08', '2026-09-15', 120.00, 0.00, 6.00, 126.00, 'unpaid', 'Consultation with Dr. Dr. Sarah Jenkins - Ref #APT-15', '2026-09-08 09:23:17', '2026-09-08 09:23:17');
 
 -- --------------------------------------------------------
 
@@ -416,7 +508,8 @@ INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_description`, `quantity`,
 (5, 2, 'Diagnostic Lab: High-Sensitivity Troponin I', 1, 75.00, 75.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (6, 2, 'Diagnostic Radiology: Digital Chest X-Ray (PA)', 1, 80.00, 80.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (7, 2, 'Attending Physician Specialist Rounding', 1, 70.00, 70.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
-(8, 3, 'Neurology Specialist Consultation - Dr. James Wilson', 1, 150.00, 150.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10');
+(8, 3, 'Neurology Specialist Consultation - Dr. James Wilson', 1, 150.00, 150.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
+(9, 4, 'Doctor Consultation Fee - Dr. Dr. Sarah Jenkins (Senior Interventional Cardiologist)', 1, 120.00, 120.00, '2026-09-08 09:23:17', '2026-09-08 09:23:17');
 
 -- --------------------------------------------------------
 
@@ -655,8 +748,8 @@ INSERT INTO `medicines` (`id`, `name`, `generic_name`, `category`, `unit_price`,
 (9, 'Rocephin 1g Vial', 'Ceftriaxone Sodium Injection', 'Antibiotic', 42.00, 60, 15, '2027-03-25', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
 (10, 'Advil 400mg', 'Ibuprofen Liqui-Gels', 'NSAID', 9.50, 250, 40, '2028-02-14', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
 (11, 'Eliquis 5mg', 'Apixaban', 'Cardiovascular', 65.00, 110, 25, '2028-04-10', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
-(12, 'Lyrica 75mg', 'Pregabalin', 'Neurology', 38.00, 90, 20, '2027-12-15', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
-(13, 'Imitrex 50mg', 'Sumatriptan Succinate', 'Neurology', 45.00, 70, 15, '2027-07-20', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
+(12, 'Lyrica 75mg', 'Pregabalin', 'Neurology', 38.00, 76, 20, '2027-12-15', '2026-09-07 09:46:09', '2026-09-08 10:05:58'),
+(13, 'Imitrex 50mg', 'Sumatriptan Succinate', 'Neurology', 45.00, 64, 15, '2027-07-20', '2026-09-07 09:46:09', '2026-09-08 09:55:07'),
 (14, 'Synthroid 75mcg', 'Levothyroxine Sodium', 'Endocrinology', 14.00, 210, 35, '2028-06-30', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
 (15, 'Plavix 75mg', 'Clopidogrel Bisulfate', 'Cardiovascular', 29.50, 12, 30, '2027-05-15', '2026-09-07 09:46:09', '2026-09-07 09:46:09');
 
@@ -969,9 +1062,9 @@ CREATE TABLE `prescriptions` (
 
 INSERT INTO `prescriptions` (`id`, `medical_record_id`, `patient_id`, `doctor_id`, `prescribed_date`, `notes`, `status`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, 1, '2026-08-24', 'Take Atorvastatin daily at bedtime. Continue low-sodium dietary modifications.', 'dispensed', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
-(2, 2, 2, 2, '2026-08-28', 'Use Sumatriptan at first onset of migraine aura. Do not exceed 200mg in 24 hours.', 'active', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
+(2, 2, 2, 2, '2026-08-28', 'Use Sumatriptan at first onset of migraine aura. Do not exceed 200mg in 24 hours.', 'dispensed', '2026-09-07 09:46:09', '2026-09-08 09:55:07'),
 (3, 3, 3, 1, '2026-09-04', 'Inpatient telemetry acute NSTEMI regimen: DAPT + Statin + Glycemic control.', 'dispensed', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
-(4, 5, 9, 4, '2026-09-03', 'Neuropathic pain relief for L5 radiculopathy.', 'active', '2026-09-07 09:46:09', '2026-09-07 09:46:09');
+(4, 5, 9, 4, '2026-09-03', 'Neuropathic pain relief for L5 radiculopathy.', 'dispensed', '2026-09-07 09:46:09', '2026-09-08 10:05:58');
 
 -- --------------------------------------------------------
 
@@ -1114,7 +1207,9 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('CyEAtUTGXQxMj2TXNxJzsslNtifQWp8dQwRMcJzl', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiNmNRaGNnTUE2RUxsMkdOYXFBS2ZoUUlyRGFuQzBreThBTjFnWGdjdyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJuZXciO2E6MDp7fXM6Mzoib2xkIjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9tZXNzYWdlcz91c2VyX2lkPTExIjtzOjU6InJvdXRlIjtzOjIyOiJjb21tdW5pY2F0aW9uLm1lc3NhZ2VzIjt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1788795145);
+('cEbRDrYGEDpaGtb9aTDYziSC2paxJrgtLxTKrT5r', 11, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiT293NE1uR2dYdTlRZk5LOXRrTUJITHFpbjlaVHlMYk9jR0tXVG95NiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJuZXciO2E6MDp7fXM6Mzoib2xkIjthOjE6e2k6MDtzOjc6InN1Y2Nlc3MiO319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbi9kZW1vL2Nhc2hpZXIiO3M6NToicm91dGUiO3M6MTA6ImxvZ2luLmRlbW8iO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxMTtzOjc6InN1Y2Nlc3MiO3M6NTU6IkxvZ2dlZCBpbiBhcyBTb3BoaWEgUGF0ZWwgKENhc2hpZXIgJiBCaWxsaW5nKSAoY2FzaGllcikiO30=', 1788879370),
+('EYifQuJP1QNhJ7xyfgy72Lk7mM2NLN2Ar4VBtXSM', 11, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoibkxlelJjQ25QdkRNYkVOYmhtTGt5VjRwWnlCVDd2TGwzUkN5NHpRVCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo0NToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL3BoYXJtYWN5L2Rpc3BlbnNlLXF1ZXVlIjt9czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDQ6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9mYWNpbGl0aWVzL2JlZC10cmFja2VyIjtzOjU6InJvdXRlIjtzOjIyOiJmYWNpbGl0aWVzLmJlZC10cmFja2VyIjt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTE7fQ==', 1788882799),
+('mRmPxEKOmyp56DVdUKfXoTpWyoZgzRXrLaPAK1NH', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9168', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoibWp2dlRQZGpBVDBFeVA3dzRKelBLblRhanA4S0FSUzM5YmlXalMxNCI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1788881612);
 
 -- --------------------------------------------------------
 
@@ -1223,6 +1318,43 @@ ALTER TABLE `admissions`
   ADD KEY `admissions_patient_id_foreign` (`patient_id`),
   ADD KEY `admissions_bed_id_foreign` (`bed_id`),
   ADD KEY `admissions_doctor_id_foreign` (`doctor_id`);
+
+--
+-- Indexes for table `ambulances`
+--
+ALTER TABLE `ambulances`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `vehicle_number` (`vehicle_number`),
+  ADD KEY `idx_ambulance_status` (`status`),
+  ADD KEY `idx_ambulance_coords` (`current_latitude`,`current_longitude`),
+  ADD KEY `fk_ambulances_current_driver` (`current_driver_id`);
+
+--
+-- Indexes for table `ambulance_bookings`
+--
+ALTER TABLE `ambulance_bookings`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_booking_status` (`booking_status`),
+  ADD KEY `fk_ambulance_bookings_patient` (`patient_id`),
+  ADD KEY `fk_ambulance_bookings_ambulance` (`ambulance_id`),
+  ADD KEY `fk_ambulance_bookings_driver` (`driver_id`),
+  ADD KEY `fk_ambulance_bookings_department` (`destination_hospital_department_id`);
+
+--
+-- Indexes for table `ambulance_drivers`
+--
+ALTER TABLE `ambulance_drivers`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`),
+  ADD UNIQUE KEY `license_number` (`license_number`);
+
+--
+-- Indexes for table `ambulance_location_logs`
+--
+ALTER TABLE `ambulance_location_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_logs_ambulance_time` (`ambulance_id`,`recorded_at`),
+  ADD KEY `fk_location_logs_booking` (`booking_id`);
 
 --
 -- Indexes for table `appointments`
@@ -1522,16 +1654,40 @@ ALTER TABLE `admissions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `ambulances`
+--
+ALTER TABLE `ambulances`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `ambulance_bookings`
+--
+ALTER TABLE `ambulance_bookings`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `ambulance_drivers`
+--
+ALTER TABLE `ambulance_drivers`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `ambulance_location_logs`
+--
+ALTER TABLE `ambulance_location_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `appointments`
 --
 ALTER TABLE `appointments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `beds`
@@ -1555,7 +1711,7 @@ ALTER TABLE `doctors`
 -- AUTO_INCREMENT for table `doctor_availabilities`
 --
 ALTER TABLE `doctor_availabilities`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `emergency_contacts`
@@ -1573,13 +1729,13 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `invoice_items`
 --
 ALTER TABLE `invoice_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `jobs`
@@ -1718,6 +1874,34 @@ ALTER TABLE `admissions`
   ADD CONSTRAINT `admissions_bed_id_foreign` FOREIGN KEY (`bed_id`) REFERENCES `beds` (`id`),
   ADD CONSTRAINT `admissions_doctor_id_foreign` FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `admissions_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `ambulances`
+--
+ALTER TABLE `ambulances`
+  ADD CONSTRAINT `fk_ambulances_current_driver` FOREIGN KEY (`current_driver_id`) REFERENCES `ambulance_drivers` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `ambulance_bookings`
+--
+ALTER TABLE `ambulance_bookings`
+  ADD CONSTRAINT `fk_ambulance_bookings_ambulance` FOREIGN KEY (`ambulance_id`) REFERENCES `ambulances` (`id`),
+  ADD CONSTRAINT `fk_ambulance_bookings_department` FOREIGN KEY (`destination_hospital_department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_ambulance_bookings_driver` FOREIGN KEY (`driver_id`) REFERENCES `ambulance_drivers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_ambulance_bookings_patient` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `ambulance_drivers`
+--
+ALTER TABLE `ambulance_drivers`
+  ADD CONSTRAINT `fk_ambulance_drivers_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `ambulance_location_logs`
+--
+ALTER TABLE `ambulance_location_logs`
+  ADD CONSTRAINT `fk_location_logs_ambulance` FOREIGN KEY (`ambulance_id`) REFERENCES `ambulances` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_location_logs_booking` FOREIGN KEY (`booking_id`) REFERENCES `ambulance_bookings` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `appointments`

@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <title>@yield('title', 'Hospital Management System') - {{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon Medical Center' }}</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -116,8 +117,12 @@
                 <i class="fa-solid fa-hospital text-xl"></i>
             </div>
             <div>
-                <h1 class="font-heading font-extrabold text-white tracking-wide text-lg leading-tight">Apex Horizon</h1>
-                <p class="text-[10px] text-cyan-400 font-bold tracking-widest uppercase">Medical Center</p>
+                <h1 class="font-heading font-extrabold text-white tracking-wide text-base leading-tight truncate max-w-[160px]" title="{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}">
+                    {{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}
+                </h1>
+                <p class="text-[10px] text-cyan-400 font-bold tracking-widest uppercase truncate max-w-[160px]">
+                    {{ $hospitalSettings['hospital_phone'] ?? 'Medical Center' }}
+                </p>
             </div>
         </div>
 
@@ -183,6 +188,11 @@
                 <span>Laboratory & Diagnostics</span>
             </a>
 
+            <a href="{{ route('ambulance.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition duration-150 {{ request()->routeIs('ambulance.*') ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50' }}">
+                <i class="fa-solid fa-truck-medical w-5 text-center text-sm {{ request()->routeIs('ambulance.*') ? 'text-cyan-400' : 'text-slate-400' }}"></i>
+                <span>Ambulance Services</span>
+            </a>
+
             <!-- Facilities & Inventory -->
             <div class="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Facilities & Pharmacy</div>
 
@@ -212,6 +222,11 @@
             <!-- Administration (Superadmin / Admin) -->
             @if(Auth::user()->isAdmin())
             <div class="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-cyan-400">System Administration</div>
+
+            <a href="{{ route('admin.ambulances.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition duration-150 {{ request()->routeIs('admin.ambulances.*') ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50' }}">
+                <i class="fa-solid fa-truck-medical w-5 text-center text-sm {{ request()->routeIs('admin.ambulances.*') ? 'text-cyan-400' : 'text-slate-400' }}"></i>
+                <span>Ambulance Fleet</span>
+            </a>
 
             <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition duration-150 {{ request()->routeIs('admin.users.*') ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50' }}">
                 <i class="fa-solid fa-users-gear w-5 text-center text-sm {{ request()->routeIs('admin.users.*') ? 'text-cyan-400' : 'text-slate-400' }}"></i>

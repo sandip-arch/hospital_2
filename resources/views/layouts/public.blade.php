@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Apex Horizon Medical Center') - Excellence in Healthcare</title>
+    <title>@yield('title', $hospitalSettings['hospital_name'] ?? 'Apex Horizon Medical Center') - Excellence in Healthcare</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,10 +53,13 @@
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div class="flex items-center gap-6">
                 <span class="flex items-center gap-1.5 text-rose-400 font-bold">
-                    <i class="fa-solid fa-phone-volume animate-pulse"></i> 24/7 Emergency: 911 / +1 (555) 911-0000
+                    <i class="fa-solid fa-phone-volume animate-pulse"></i> 24/7 Emergency: {{ $hospitalSettings['emergency_contact_number'] ?? '911 / +1 (555) 911-0000' }}
                 </span>
-                <span class="hidden md:inline-flex items-center gap-1.5 text-slate-400 font-medium">
-                    <i class="fa-solid fa-location-dot text-cyan-400"></i> 500 Health Sciences Blvd, Boston MA
+                <a href="{{ route('ambulance.index') }}" class="inline-flex items-center gap-1.5 text-rose-400 hover:text-rose-300 font-bold transition">
+                    <i class="fa-solid fa-truck-medical"></i> Ambulance Radar & Dispatch
+                </a>
+                <span class="hidden lg:inline-flex items-center gap-1.5 text-slate-400 font-medium">
+                    <i class="fa-solid fa-location-dot text-cyan-400"></i> {{ $hospitalSettings['hospital_address'] ?? '500 Health Sciences Blvd, Boston MA' }}
                 </span>
             </div>
             <div class="flex items-center gap-4 text-slate-400 font-medium text-xs">
@@ -82,8 +85,8 @@
                     <i class="fa-solid fa-hospital text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-heading font-extrabold text-slate-900 tracking-tight text-xl leading-none">Apex Horizon</h1>
-                    <p class="text-xs text-cyan-600 font-bold tracking-wider uppercase mt-1">Medical Center</p>
+                    <h1 class="font-heading font-extrabold text-slate-900 tracking-tight text-xl leading-none">{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}</h1>
+                    <p class="text-xs text-cyan-600 font-bold tracking-wider uppercase mt-1">{{ $hospitalSettings['hospital_phone'] ?? 'Medical Center' }}</p>
                 </div>
             </a>
 
@@ -92,6 +95,10 @@
                 <a href="{{ route('public.home') }}" class="hover:text-cyan-600 transition {{ request()->routeIs('public.home') ? 'text-cyan-600 font-extrabold' : '' }}">Home</a>
                 <a href="{{ route('public.departments') }}" class="hover:text-cyan-600 transition {{ request()->routeIs('public.departments') ? 'text-cyan-600 font-extrabold' : '' }}">Specialities</a>
                 <a href="{{ route('public.doctors') }}" class="hover:text-cyan-600 transition {{ request()->routeIs('public.doctors') ? 'text-cyan-600 font-extrabold' : '' }}">Find a Doctor</a>
+                <a href="{{ route('ambulance.index') }}" class="hover:text-rose-600 transition flex items-center gap-1.5 {{ request()->routeIs('ambulance.*') ? 'text-rose-600 font-extrabold' : '' }}">
+                    <i class="fa-solid fa-truck-medical text-rose-500"></i>
+                    <span>Ambulance</span>
+                </a>
                 <a href="{{ route('public.home') }}#services" class="hover:text-cyan-600 transition">Services</a>
                 <a href="#contact" class="hover:text-cyan-600 transition">Contact</a>
             </nav>

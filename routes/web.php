@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\SystemSettingController;
+use App\Http\Controllers\AmbulanceController;
+use App\Http\Controllers\Admin\AmbulanceAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +30,19 @@ Route::get('/', [PublicController::class, 'home'])->name('public.home');
 Route::get('/doctors-directory', [PublicController::class, 'doctors'])->name('public.doctors');
 Route::get('/departments-overview', [PublicController::class, 'departments'])->name('public.departments');
 Route::post('/book-appointment-request', [PublicController::class, 'bookRequest'])->name('public.bookRequest');
+
+// Ambulance Module: Discovery Map, Booking & Zomato-Style Live Tracking
+Route::get('/ambulance', [AmbulanceController::class, 'index'])->name('ambulance.index');
+Route::get('/ambulance/book/{ambulance?}', [AmbulanceController::class, 'showBookingForm'])->name('ambulance.book');
+Route::post('/ambulance/book', [AmbulanceController::class, 'storeBooking'])->name('ambulance.book.submit');
+Route::get('/ambulance/track/{id}', [AmbulanceController::class, 'track'])->name('ambulance.track');
+Route::get('/ambulance/my-bookings', [AmbulanceController::class, 'myBookings'])->name('ambulance.my-bookings');
+
+// Ambulance Live APIs (Coordinates, Tracking & Real-Time Simulation)
+Route::get('/ambulance/api/locations', [AmbulanceController::class, 'apiLocations'])->name('ambulance.api.locations');
+Route::get('/ambulance/api/track/{id}', [AmbulanceController::class, 'apiTrack'])->name('ambulance.api.track');
+Route::post('/ambulance/api/simulate-step/{id}', [AmbulanceController::class, 'apiSimulateStep'])->name('ambulance.api.simulate');
+Route::post('/ambulance/api/reposition-near-device', [AmbulanceController::class, 'apiRepositionNearDevice'])->name('ambulance.api.reposition');
 
 /*
 |--------------------------------------------------------------------------
@@ -149,5 +164,17 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/settings', [SystemSettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SystemSettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/custom', [SystemSettingController::class, 'storeSetting'])->name('settings.store');
+        Route::delete('/settings/{id}', [SystemSettingController::class, 'destroySetting'])->name('settings.destroy');
+
+        // Ambulance Fleet Management (Superadmin & Admin only)
+        Route::get('/ambulances', [AmbulanceAdminController::class, 'index'])->name('ambulances.index');
+        Route::get('/ambulances/create', [AmbulanceAdminController::class, 'create'])->name('ambulances.create');
+        Route::post('/ambulances', [AmbulanceAdminController::class, 'store'])->name('ambulances.store');
+        Route::get('/ambulances/{id}/edit', [AmbulanceAdminController::class, 'edit'])->name('ambulances.edit');
+        Route::put('/ambulances/{id}', [AmbulanceAdminController::class, 'update'])->name('ambulances.update');
+        Route::delete('/ambulances/{id}', [AmbulanceAdminController::class, 'destroy'])->name('ambulances.destroy');
+        Route::get('/ambulance-drivers', [AmbulanceAdminController::class, 'drivers'])->name('ambulances.drivers');
+        Route::post('/ambulance-drivers', [AmbulanceAdminController::class, 'storeDriver'])->name('ambulances.drivers.store');
     });
 });

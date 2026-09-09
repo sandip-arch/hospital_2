@@ -84,4 +84,9 @@ class Patient extends Model
     {
         return $this->dob ? Carbon::parse($this->dob)->age : 0;
     }
+
+    public function ambulanceBookings(): HasMany
+    {
+        return $this->hasMany(AmbulanceBooking::class);
+    }
 }
