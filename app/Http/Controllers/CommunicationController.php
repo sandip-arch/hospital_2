@@ -35,6 +35,14 @@ class CommunicationController extends Controller
         return back()->with('success', 'All notifications marked as read.');
     }
 
+    public function openNotification($id)
+    {
+        $notification = Notification::where('user_id', Auth::id())->findOrFail($id);
+        $notification->update(['is_read' => true]);
+
+        return redirect($notification->target_url);
+    }
+
     public function messages(Request $request)
     {
         $currentUserId = Auth::id();

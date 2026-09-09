@@ -125,6 +125,7 @@ Route::middleware(['auth'])->group(function () {
 
     // 10. Communication & Notifications
     Route::get('/notifications', [CommunicationController::class, 'notifications'])->name('communication.notifications');
+    Route::get('/notifications/{id}/open', [CommunicationController::class, 'openNotification'])->name('communication.notifications.open');
     Route::post('/notifications/{id}/read', [CommunicationController::class, 'markAsRead'])->name('communication.notifications.read');
     Route::post('/notifications/read-all', [CommunicationController::class, 'markAllRead'])->name('communication.notifications.readAll');
     Route::get('/messages', [CommunicationController::class, 'messages'])->name('communication.messages');

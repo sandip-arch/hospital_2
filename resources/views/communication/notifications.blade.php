@@ -25,13 +25,13 @@
     <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden divide-y divide-slate-100">
         @forelse($notifications as $n)
         <div class="p-6 transition flex items-start justify-between gap-4 {{ $n->is_read ? 'bg-white opacity-80' : 'bg-cyan-50/20' }}">
-            <div class="flex items-start gap-4">
-                <div class="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-lg shrink-0">
+            <a href="{{ route('communication.notifications.open', $n->id) }}" class="flex items-start gap-4 flex-1 group">
+                <div class="w-10 h-10 rounded-2xl bg-slate-100 group-hover:bg-cyan-600 group-hover:text-white flex items-center justify-center text-lg shrink-0 transition">
                     <i class="fa-solid {{ $n->type_icon }}"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-slate-900 text-sm">{{ $n->title }}</h4>
+                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition">{{ $n->title }}</h4>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
                             {{ $n->type }}
                         </span>
@@ -42,16 +42,21 @@
                     <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $n->message }}</p>
                     <span class="text-[10px] text-slate-400 mt-2 block">{{ $n->created_at->format('M d, Y - h:i A') }} ({{ $n->created_at->diffForHumans() }})</span>
                 </div>
-            </div>
+            </a>
 
-            @if(!$n->is_read)
-            <form action="{{ route('communication.notifications.read', $n->id) }}" method="POST">
-                @csrf
-                <button type="submit" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">
-                    Mark Read
-                </button>
-            </form>
-            @endif
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="{{ route('communication.notifications.open', $n->id) }}" class="px-3 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-bold rounded-lg text-xs transition inline-flex items-center gap-1">
+                    Open <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+                @if(!$n->is_read)
+                <form action="{{ route('communication.notifications.read', $n->id) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">
+                        Mark Read
+                    </button>
+                </form>
+                @endif
+            </div>
         </div>
         @empty
         <div class="p-12 text-center text-slate-400">

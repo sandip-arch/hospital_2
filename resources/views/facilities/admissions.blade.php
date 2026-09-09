@@ -36,6 +36,7 @@
                         <th class="py-4 px-6">Attending Physician</th>
                         <th class="py-4 px-6">Length of Stay</th>
                         <th class="py-4 px-6">Status</th>
+                        <th class="py-4 px-6 text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -65,10 +66,26 @@
                                 {{ ucfirst($adm->status) }}
                             </span>
                         </td>
+                        <td class="py-4 px-6 text-right">
+                            @if($adm->status === 'admitted' && Auth::user()->canDischargeAdmission($adm))
+                            <form action="{{ route('facilities.discharge', $adm->id) }}" method="POST" onsubmit="return confirm('Confirm discharge for {{ addslashes($adm->patient->full_name) }}?');" class="inline-block">
+                                @csrf
+                                <input type="hidden" name="discharge_notes" value="Discharged from inpatient registry.">
+                                <input type="hidden" name="generate_invoice" value="1">
+                                <button type="submit" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[11px] font-bold shadow-xs transition inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-person-walking-arrow-right text-[10px]"></i> Discharge
+                                </button>
+                            </form>
+                            @elseif($adm->discharge_date)
+                            <span class="text-[11px] text-slate-400 font-semibold">Completed</span>
+                            @else
+                            <span class="text-[11px] text-slate-400">&mdash;</span>
+                            @endif
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-12 text-center text-slate-400">
+                        <td colspan="8" class="py-12 text-center text-slate-400">
                             <i class="fa-solid fa-bed-pulse text-4xl mb-3 text-slate-300"></i>
                             <p class="font-semibold text-slate-600 text-sm">No inpatient admission records found.</p>
                         </td>
