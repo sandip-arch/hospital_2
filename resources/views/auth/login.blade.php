@@ -3,6 +3,12 @@
 @section('title', 'Hospital System Login')
 
 @section('content')
+<style>
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+</style>
 <div class="grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-800/60 ring-1 ring-white/10">
 
     <!-- Left Login Form Panel -->
@@ -58,15 +64,21 @@
                 </div>
 
                 <div>
-                    <div class="flex items-center justify-between mb-1">
+                    <div class="input-group" style="position: relative;">
                         <label class="block text-xs font-bold text-slate-700">Password</label>
                     </div>
                     <div class="relative">
-                        <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="password" name="password" required
-                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
-                               placeholder="••••••••">
-                    </div>
+    <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+    
+    <input id="password" type="password" name="password" required
+           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+           placeholder="••••••••"
+           oninput="toggleIconDisplay('password', 'toggle-span-login')">
+           
+    <span id="toggle-span-login" class="toggle-password" onclick="togglePasswordVisibility('password', 'toggle-icon')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; display: none;">
+        <i id="toggle-icon" class="fa fa-eye" style="color: #6b7280;"></i>
+    </span>
+</div>
                 </div>
 
                 <div class="flex items-center justify-between text-xs pt-1">
@@ -214,4 +226,32 @@
     </div>
 
 </div>
+<script>
+    function togglePasswordVisibility(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
+
+        if (passwordInput.type === 'password') {
+            // Show password
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash'); // Changes icon to a crossed-out eye
+        } else {
+            // Hide password
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+    function toggleIconDisplay(inputId, spanId) {
+    const input = document.getElementById(inputId);
+    const span = document.getElementById(spanId);
+    
+    if (input.value.length > 0) {
+        span.style.display = 'block'; 
+    } else {
+        span.style.display = 'none';  
+    }
+    }
+</script>
 @endsection

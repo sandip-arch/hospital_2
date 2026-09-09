@@ -3,6 +3,12 @@
 @section('title', 'Patient Self-Registration')
 
 @section('content')
+<style>
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+</style>
 <div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-800/40 p-8 lg:p-12">
 
     <!-- Header -->
@@ -95,19 +101,31 @@
                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Street Address, City, State, ZIP">
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
-                <input type="password" name="password" required
-                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Minimum 6 characters">
-            </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div style="position: relative;">
+        <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+        <input id="password" type="password" name="password" required
+               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" 
+               placeholder="Minimum 6 characters"
+               oninput="toggleIconDisplay('password', 'toggle-span-reg')">
+               
+        <span id="toggle-span-reg" class="toggle-password" onclick="togglePasswordVisibility('password', 'toggle-icon')" style="position: absolute; right: 15px; top: 38px; transform: translateY(-50%); cursor: pointer; z-index: 10; display: none;">
+            <i id="toggle-icon" class="fa fa-eye" style="color: #6b7280;"></i>
+        </span>
+    </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Confirm Password *</label>
-                <input type="password" name="password_confirmation" required
-                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Repeat password">
-            </div>
-        </div>
+    <div style="position: relative;">
+        <label class="block text-xs font-bold text-slate-700 mb-1">Confirm Password *</label>
+        <input id="password_confirmation" type="password" name="password_confirmation" required
+               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" 
+               placeholder="Repeat password"
+               oninput="toggleIconDisplay('password_confirmation', 'toggle-span-confirm')">
+               
+        <span id="toggle-span-confirm" class="toggle-password" onclick="togglePasswordVisibility('password_confirmation', 'toggle-icon-confirm')" style="position: absolute; right: 15px; top: 38px; transform: translateY(-50%); cursor: pointer; z-index: 10; display: none;">
+            <i id="toggle-icon-confirm" class="fa fa-eye" style="color: #6b7280;"></i>
+        </span>
+    </div>
+</div>
 
         <div class="pt-4">
             <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-cyan-600/30 transition flex items-center justify-center gap-2">
@@ -121,4 +139,30 @@
     </div>
 
 </div>
+<script>
+    function togglePasswordVisibility(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+    function toggleIconDisplay(inputId, spanId) {
+    const input = document.getElementById(inputId);
+    const span = document.getElementById(spanId);
+    
+    if (input.value.length > 0) {
+        span.style.display = 'block'; 
+    } else {
+        span.style.display = 'none';  
+    }
+    }
+</script>
 @endsection
