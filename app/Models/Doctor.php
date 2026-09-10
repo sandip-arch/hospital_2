@@ -67,6 +67,11 @@ class Doctor extends Model
         return $this->hasMany(Admission::class);
     }
 
+    public function ambulances(): HasMany
+    {
+        return $this->hasMany(Ambulance::class, 'assigned_doctor_id');
+    }
+
     public function getFullNameAttribute(): string
     {
         return $this->user ? 'Dr. ' . $this->user->name : 'Dr. Doctor';

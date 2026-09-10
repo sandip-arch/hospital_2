@@ -18,6 +18,7 @@ class Ambulance extends Model
         'model',
         'type',
         'current_driver_id',
+        'assigned_doctor_id',
         'status',
         'current_latitude',
         'current_longitude',
@@ -35,6 +36,11 @@ class Ambulance extends Model
         return $this->belongsTo(AmbulanceDriver::class, 'current_driver_id');
     }
 
+    public function assignedDoctor(): BelongsTo
+    {
+        return $this->belongsTo(Doctor::class, 'assigned_doctor_id');
+    }
+
     public function bookings(): HasMany
     {
         return $this->hasMany(AmbulanceBooking::class, 'ambulance_id');
@@ -43,6 +49,11 @@ class Ambulance extends Model
     public function locationLogs(): HasMany
     {
         return $this->hasMany(AmbulanceLocationLog::class, 'ambulance_id');
+    }
+
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(AmbulanceComplaint::class, 'ambulance_id');
     }
 
     public function activeBooking()

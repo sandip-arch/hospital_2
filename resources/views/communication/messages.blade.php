@@ -9,24 +9,65 @@
 
     <!-- Left Users Roster -->
     <div class="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0 bg-slate-50/50">
-        <div class="p-4 border-b border-slate-200">
-            <h3 class="font-bold text-slate-900 text-sm">Hospital Personnel Directory</h3>
-            <p class="text-[11px] text-slate-500">Select a colleague to start conversation</p>
+        <div class="p-4 border-b border-slate-200 bg-white">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                <i class="fa-solid {{ Auth::user()->isPatient() ? 'fa-user-doctor text-cyan-600' : (Auth::user()->isDriver() ? 'fa-shield-halved text-purple-600' : 'fa-users text-indigo-600') }}"></i>
+                {{ Auth::user()->isPatient() ? 'My Healthcare Contacts' : (Auth::user()->isDriver() ? 'Administrative Contacts' : 'Hospital Personnel Directory') }}
+            </h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">
+                {{ Auth::user()->isPatient() ? 'Your appointed doctors & receptionists' : (Auth::user()->isDriver() ? 'Superadmin, Admin & Hospital Admin' : 'Select a contact to start conversation') }}
+            </p>
         </div>
 
         <div class="flex-1 overflow-y-auto divide-y divide-slate-100 custom-scrollbar">
-            @foreach($users as $u)
+            @forelse($users as $u)
             <a href="{{ route('communication.messages', ['user_id' => $u->id]) }}" 
                class="p-4 flex items-center gap-3 transition block {{ $selectedUser && $selectedUser->id === $u->id ? 'bg-cyan-50 border-l-4 border-cyan-600' : 'hover:bg-slate-100/70' }}">
-                <div class="w-10 h-10 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-full {{ $u->isDoctor() ? 'bg-gradient-to-tr from-blue-600 to-cyan-600' : ($u->isReceptionist() ? 'bg-gradient-to-tr from-emerald-600 to-teal-600' : ($u->isDriver() ? 'bg-gradient-to-tr from-cyan-600 to-teal-700' : 'bg-slate-800')) }} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                     {{ substr($u->name, 0, 2) }}
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-xs font-bold text-slate-900 truncate">{{ $u->name }}</p>
-                    <span class="text-[10px] text-slate-400 block uppercase font-semibold">{{ $u->primaryRoleDisplay() }}</span>
+                    @if($u->isDoctor() && $u->doctor)
+                        <span class="text-[10px] text-blue-600 font-semibold truncate block">
+                            <i class="fa-solid fa-stethoscope text-[9px] mr-0.5"></i> {{ $u->doctor->specialization }}
+                        </span>
+                    @elseif($u->isReceptionist())
+                        <span class="text-[10px] text-emerald-600 font-semibold truncate block">
+                            <i class="fa-solid fa-bell-concierge text-[9px] mr-0.5"></i> Front Desk / Receptionist
+                        </span>
+                    @elseif($u->isDriver())
+                        <span class="text-[10px] text-cyan-600 font-semibold truncate block">
+                            <i class="fa-solid fa-truck-medical text-[9px] mr-0.5"></i> Ambulance Driver
+                        </span>
+                    @elseif($u->isPatient())
+                        <span class="text-[10px] text-amber-600 font-semibold truncate block">
+                            <i class="fa-solid fa-hospital-user text-[9px] mr-0.5"></i> Patient
+                        </span>
+                    @else
+                        <span class="text-[10px] text-purple-600 font-semibold block uppercase">
+                            <i class="fa-solid fa-shield-halved text-[9px] mr-0.5"></i> {{ $u->primaryRoleDisplay() }}
+                        </span>
+                    @endif
                 </div>
             </a>
-            @endforeach
+            @empty
+            <div class="p-8 text-center text-slate-400">
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                    <i class="fa-solid fa-user-slash text-xl"></i>
+                </div>
+                <p class="text-xs font-bold text-slate-700">No contacts available</p>
+                <p class="text-[11px] text-slate-400 mt-1">
+                    @if(Auth::user()->isPatient())
+                        Book a consultation with a doctor to begin communicating with them here.
+                    @elseif(Auth::user()->isDriver())
+                        No active hospital administrators available.
+                    @else
+                        No eligible contacts found in directory.
+                    @endif
+                </p>
+            </div>
+            @endforelse
         </div>
     </div>
 
@@ -83,7 +124,9 @@
                 <i class="fa-solid fa-comments"></i>
             </div>
             <h4 class="font-bold text-slate-700 text-base">Select a conversation</h4>
-            <p class="text-xs text-slate-400 mt-1">Choose a doctor, nurse, or administrator from the left panel.</p>
+            <p class="text-xs text-slate-400 mt-1">
+                {{ Auth::user()->isPatient() ? 'Select an appointed doctor or front-desk receptionist from the left roster to start chatting.' : 'Choose a colleague or patient from the left directory to start a conversation.' }}
+            </p>
         </div>
         @endif
     </div>

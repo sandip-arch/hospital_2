@@ -77,15 +77,31 @@
                     </select>
                 </div>
 
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">
-                        Assigned Driver
+                <div class="sm:col-span-1">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-id-card text-cyan-600"></i>
+                        <span>Assigned Driver</span>
                     </label>
                     <select name="current_driver_id" class="w-full text-xs font-semibold px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:bg-white transition">
                         <option value="">-- No Driver Assigned --</option>
                         @foreach($availableDrivers as $drv)
                         <option value="{{ $drv->id }}" {{ old('current_driver_id', $ambulance->current_driver_id) == $drv->id ? 'selected' : '' }}>
                             {{ $drv->user?->name }} (Lic: {{ $drv->license_number }} | Phone: {{ $drv->contact_number }})
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="sm:col-span-1">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-doctor text-cyan-600"></i>
+                        <span>Assigned Attending Doctor / Medical Officer</span>
+                    </label>
+                    <select name="assigned_doctor_id" class="w-full text-xs font-semibold px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:bg-white transition">
+                        <option value="">-- No Doctor Assigned --</option>
+                        @foreach($availableDoctors as $doc)
+                        <option value="{{ $doc->id }}" {{ old('assigned_doctor_id', $ambulance->assigned_doctor_id) == $doc->id ? 'selected' : '' }}>
+                            Dr. {{ $doc->user?->name }} ({{ $doc->specialization }} &bull; {{ $doc->department->name ?? 'Clinical' }})
                         </option>
                         @endforeach
                     </select>

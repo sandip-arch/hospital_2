@@ -7,6 +7,42 @@
 @section('content')
 <div class="space-y-8">
 
+    <!-- Executive Governance & User Identity Header -->
+    <div class="bg-gradient-to-r from-slate-900 via-slate-950 to-indigo-950 rounded-3xl p-6 lg:p-7 text-white shadow-xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div class="flex items-center gap-5">
+            <div class="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-400/40 text-purple-300 text-2xl font-black flex items-center justify-center shrink-0 shadow-inner">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <h3 class="text-xl lg:text-2xl font-black tracking-tight">{{ Auth::user()->name }}</h3>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                        {{ Auth::user()->primaryRoleDisplay() }}
+                    </span>
+                    <!-- Sign-in Username Badge -->
+                    <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-900/90 text-cyan-300 border border-cyan-500/40 shadow-xs flex items-center gap-1.5" title="Use this username or email to sign in">
+                        <i class="fa-solid fa-at text-cyan-400 text-[11px]"></i>Sign-in Username: <strong class="text-white font-mono font-bold">{{ Auth::user()->username }}</strong>
+                    </span>
+                </div>
+                <p class="text-xs text-slate-300 mt-1.5 flex flex-wrap items-center gap-2">
+                    <span><i class="fa-regular fa-envelope text-cyan-400 mr-1"></i>{{ Auth::user()->email }}</span>
+                    <span class="text-slate-600">&bull;</span>
+                    <span class="text-emerald-400 font-semibold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span> Active Admin Session</span>
+                    <span class="text-slate-600">&bull;</span>
+                    <span class="text-slate-400">Sign in with either email or <code class="text-cyan-300 font-mono font-bold">{{ Auth::user()->username }}</code></span>
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2.5 shrink-0">
+            <a href="{{ route('admin.users.index') }}" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-users-gear text-cyan-400"></i> User Roster
+            </a>
+            <a href="{{ route('admin.settings.index') }}" class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders"></i> Settings
+            </a>
+        </div>
+    </div>
+
     <!-- KPI Metric Cards Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 

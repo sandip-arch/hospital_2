@@ -7,10 +7,60 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\Appointment;
+use App\Models\Admission;
+use App\Models\Doctor;
 use App\Services\AuditService;
 
 class CommunicationController extends Controller
 {
+    /**
+     * Get allowed chat contact User IDs for a patient (only their appointed doctors and receptionists).
+     */
+    public static function getAllowedPatientContactUserIds(User $user)
+    {
+        $patient = $user->patient;
+        $doctorUserIds = collect();
+
+        if ($patient) {
+            $appointmentDocIds = Appointment::where('patient_id', $patient->id)->pluck('doctor_id');
+            $admissionDocIds = Admission::where('patient_id', $patient->id)->pluck('doctor_id');
+            $allDocIds = $appointmentDocIds->merge($admissionDocIds)->filter()->unique();
+
+            $doctorUserIds = Doctor::whereIn('id', $allDocIds)->whereNotNull('user_id')->pluck('user_id');
+        }
+
+        // Hospital Front Desk / Receptionists
+        $receptionistUserIds = User::where('status', 'active')
+            ->where(function ($q) {
+                $q->whereHas('staff', function ($sq) {
+                    $sq->where(function ($tsq) {
+                        $tsq->where('job_title', 'like', '%receptionist%')
+                            ->orWhere('job_title', 'like', '%front desk%');
+                    });
+                })->orWhereHas('roles', function ($rq) {
+                    $rq->where('name', 'receptionist');
+                });
+            })
+            ->pluck('id');
+
+        return $doctorUserIds->merge($receptionistUserIds)->unique()->values();
+    }
+
+    /**
+     * Get allowed chat contact User IDs for an ambulance driver (admin, superadmin, hospital admin).
+     */
+    public static function getAllowedDriverContactUserIds(User $user)
+    {
+        return User::where('status', 'active')
+            ->where(function ($q) {
+                $q->whereHas('roles', function ($rq) {
+                    $rq->whereIn('name', ['superadmin', 'admin']);
+                });
+            })
+            ->pluck('id');
+    }
+
     public function notifications()
     {
         $user = Auth::user();
@@ -45,16 +95,54 @@ class CommunicationController extends Controller
 
     public function messages(Request $request)
     {
-        $currentUserId = Auth::id();
+        $currentUser = Auth::user();
+        $currentUserId = $currentUser->id;
         $selectedUserId = $request->query('user_id');
 
-        $users = User::where('id', '!=', $currentUserId)->where('status', 'active')->orderBy('name')->get();
+        if ($currentUser->isPatient()) {
+            $allowedContactIds = self::getAllowedPatientContactUserIds($currentUser);
+
+            $users = User::with(['roles', 'doctor.department', 'staff'])
+                ->whereIn('id', $allowedContactIds)
+                ->where('id', '!=', $currentUserId)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
+
+            // Guard: if patient attempts to navigate to an unauthorized contact, block and redirect
+            if ($selectedUserId && !$allowedContactIds->contains((int) $selectedUserId)) {
+                return redirect()->route('communication.messages')
+                    ->with('error', 'Patients can only chat with their appointed doctors or hospital receptionists.');
+            }
+        } elseif ($currentUser->isDriver()) {
+            $allowedContactIds = self::getAllowedDriverContactUserIds($currentUser);
+
+            $users = User::with(['roles', 'doctor.department', 'staff'])
+                ->whereIn('id', $allowedContactIds)
+                ->where('id', '!=', $currentUserId)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
+
+            // Guard: if driver attempts to navigate to an unauthorized contact, block and redirect
+            if ($selectedUserId && !$allowedContactIds->contains((int) $selectedUserId)) {
+                return redirect()->route('communication.messages')
+                    ->with('error', 'Ambulance drivers can only chat with administrative personnel (Admin, Superadmin, Hospital Admin).');
+            }
+        } else {
+            // For medical and administrative staff: full internal roster
+            $users = User::with(['roles', 'doctor.department', 'staff', 'patient', 'ambulanceDriver'])
+                ->where('id', '!=', $currentUserId)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
+        }
 
         $selectedUser = null;
         $messages = collect();
 
         if ($selectedUserId) {
-            $selectedUser = User::findOrFail($selectedUserId);
+            $selectedUser = User::with(['roles', 'doctor.department', 'staff', 'patient', 'ambulanceDriver'])->findOrFail($selectedUserId);
 
             // Mark received messages from this user as read
             Message::where('sender_id', $selectedUserId)
@@ -78,8 +166,23 @@ class CommunicationController extends Controller
             'message_body' => 'required|string|max:1000',
         ]);
 
+        $currentUser = Auth::user();
+
+        // Security check: patients can only send messages to their appointed doctors or receptionists
+        if ($currentUser->isPatient()) {
+            $allowedContactIds = self::getAllowedPatientContactUserIds($currentUser);
+            if (!$allowedContactIds->contains((int) $validated['receiver_id'])) {
+                return back()->with('error', 'Unauthorized. Patients can only message their appointed doctors or hospital receptionists.');
+            }
+        } elseif ($currentUser->isDriver()) {
+            $allowedContactIds = self::getAllowedDriverContactUserIds($currentUser);
+            if (!$allowedContactIds->contains((int) $validated['receiver_id'])) {
+                return back()->with('error', 'Unauthorized. Ambulance drivers can only message administrative personnel (Admin, Superadmin, Hospital Admin).');
+            }
+        }
+
         $message = Message::create([
-            'sender_id' => Auth::id(),
+            'sender_id' => $currentUser->id,
             'receiver_id' => $validated['receiver_id'],
             'message_body' => $validated['message_body'],
             'sent_at' => now(),
@@ -90,7 +193,7 @@ class CommunicationController extends Controller
         Notification::create([
             'user_id' => $validated['receiver_id'],
             'title' => 'New Internal Message',
-            'message' => "Message from " . Auth::user()->name . ": " . substr($validated['message_body'], 0, 50) . '...',
+            'message' => "Message from " . $currentUser->name . ": " . substr($validated['message_body'], 0, 50) . '...',
             'type' => 'system',
             'is_read' => false,
         ]);

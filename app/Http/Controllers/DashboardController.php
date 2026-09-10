@@ -20,6 +20,9 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Medicine;
 use App\Models\AuditLog;
+use App\Models\Ambulance;
+use App\Models\AmbulanceDriver;
+use App\Models\AmbulanceComplaint;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -38,6 +41,10 @@ class DashboardController extends Controller
 
         if ($user->isStaff()) {
             return $this->staffDashboard();
+        }
+
+        if ($user->isDriver()) {
+            return $this->driverDashboard();
         }
 
         return $this->patientDashboard();
@@ -214,5 +221,100 @@ class DashboardController extends Controller
             ->get();
 
         return view('dashboards.patient', compact('patient', 'upcomingAppointments', 'pastMedicalRecords', 'prescriptions', 'labReports', 'invoices'));
+    }
+
+    private function driverDashboard()
+    {
+        $user = Auth::user();
+        $patient = $user->patient;
+
+        if (!$patient) {
+            // Auto-create patient profile so driver has all patient features
+            $count = Patient::count() + 1;
+            $upi = 'PAT-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $names = explode(' ', $user->name, 2);
+
+            $patient = Patient::create([
+                'user_id' => $user->id,
+                'patient_code' => $upi,
+                'first_name' => $names[0] ?? 'Driver',
+                'last_name' => $names[1] ?? 'Personnel',
+                'dob' => '1990-01-01',
+                'gender' => 'Other',
+                'phone' => '+1 (555) 000-0000',
+                'email' => $user->email,
+            ]);
+        }
+
+        // Standard patient portal clinical features
+        $upcomingAppointments = Appointment::with(['doctor.user', 'department'])
+            ->where('patient_id', $patient->id)
+            ->where('appointment_date', '>=', today())
+            ->orderBy('appointment_date')
+            ->get();
+
+        $pastMedicalRecords = MedicalRecord::with(['doctor.user', 'details'])
+            ->where('patient_id', $patient->id)
+            ->orderBy('visit_date', 'desc')
+            ->get();
+
+        $prescriptions = Prescription::with(['doctor.user', 'items.medicine'])
+            ->where('patient_id', $patient->id)
+            ->orderBy('prescribed_date', 'desc')
+            ->get();
+
+        $labReports = LabReport::with(['test', 'doctor.user'])
+            ->where('patient_id', $patient->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $invoices = Invoice::with(['items', 'payments'])
+            ->where('patient_id', $patient->id)
+            ->orderBy('invoice_date', 'desc')
+            ->get();
+
+        // Driver-specific ambulance & complaints module
+        $driver = $user->ambulanceDriver;
+        if (!$driver) {
+            $driver = AmbulanceDriver::create([
+                'user_id' => $user->id,
+                'license_number' => 'DRV-' . strtoupper(uniqid()),
+                'contact_number' => '+1 (555) 000-0000',
+                'status' => 'on_duty',
+            ]);
+        }
+
+        $assignedAmbulance = Ambulance::with(['assignedDoctor.user', 'currentDriver'])
+            ->where('current_driver_id', $driver->id)
+            ->first();
+
+        $fleetAmbulances = Ambulance::orderBy('vehicle_number')->get();
+
+        $recentComplaints = AmbulanceComplaint::with(['ambulance'])
+            ->where('driver_id', $driver->id)
+            ->latest()
+            ->take(6)
+            ->get();
+
+        $complaintStats = [
+            'total' => AmbulanceComplaint::where('driver_id', $driver->id)->count(),
+            'pending' => AmbulanceComplaint::where('driver_id', $driver->id)->where('status', 'submitted')->count(),
+            'in_maintenance' => AmbulanceComplaint::where('driver_id', $driver->id)->where('status', 'in_maintenance')->count(),
+            'resolved' => AmbulanceComplaint::where('driver_id', $driver->id)->where('status', 'resolved')->count(),
+        ];
+
+        return view('dashboards.driver', compact(
+            'patient',
+            'driver',
+            'assignedAmbulance',
+            'fleetAmbulances',
+            'recentComplaints',
+            'complaintStats',
+            'upcomingAppointments',
+            'pastMedicalRecords',
+            'prescriptions',
+            'labReports',
+            'invoices'
+        ));
     }
 }

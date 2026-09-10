@@ -38,6 +38,11 @@ class AmbulanceDriver extends Model
         return $this->hasMany(AmbulanceBooking::class, 'driver_id');
     }
 
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(AmbulanceComplaint::class, 'driver_id');
+    }
+
     public function isOnDuty(): bool
     {
         return $this->status === 'on_duty';

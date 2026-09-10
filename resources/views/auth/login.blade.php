@@ -106,7 +106,7 @@ input[type="password"]::-ms-clear {
         <div>
             <div class="flex items-center justify-between mb-3">
                 <span class="text-[10px] font-extrabold uppercase tracking-widest text-cyan-400 bg-cyan-950/80 border border-cyan-800/80 px-3 py-1 rounded-full">
-                    <i class="fa-solid fa-bolt mr-1"></i> Instant 1-Click Demo Login
+                    <i class="fa-solid fa-bolt mr-1"></i> Instant Role-Based Demonstration (1-Click Demo Login)
                 </span>
                 <span class="text-xs text-slate-400 font-medium">Default Password: <code class="text-cyan-300 font-bold bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-700">password</code></span>
             </div>

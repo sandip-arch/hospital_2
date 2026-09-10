@@ -17,6 +17,7 @@ class RoleAndPermissionSeeder extends Seeder
             'doctor' => ['display_name' => 'Doctor / Physician', 'description' => 'Clinical diagnosis, prescribing, and patient care'],
             'staff' => ['display_name' => 'Hospital Staff', 'description' => 'Support staff (Reception, Nursing, Lab, Pharmacy, Billing)'],
             'patient' => ['display_name' => 'Patient', 'description' => 'Patient portal user for appointments, records, and billing'],
+            'driver' => ['display_name' => 'Ambulance Driver', 'description' => 'Emergency response and patient transport ambulance driver'],
             'user' => ['display_name' => 'General / Guest User', 'description' => 'Unverified or registered visitor on public portal'],
         ];
 

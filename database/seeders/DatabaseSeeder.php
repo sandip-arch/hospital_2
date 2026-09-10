@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             UserAndStaffSeeder::class,
             PatientAndMedicalSeeder::class,
             PharmacyAndBillingSeeder::class,
+            AmbulanceSeeder::class,
         ]);
     }
 }

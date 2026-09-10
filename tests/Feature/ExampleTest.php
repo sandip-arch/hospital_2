@@ -7,6 +7,12 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->artisan('migrate:fresh --seed');
+    }
+
     /**
      * A basic test example.
      */

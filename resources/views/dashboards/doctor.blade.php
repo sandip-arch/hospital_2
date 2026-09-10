@@ -14,14 +14,18 @@
                 <i class="fa-solid fa-user-doctor"></i>
             </div>
             <div>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <h3 class="text-2xl font-black">{{ $doctor->full_name }}</h3>
                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                         {{ $doctor->department->name ?? 'Specialist' }}
                     </span>
+                    <!-- Sign-in Username Badge -->
+                    <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-950/80 text-cyan-300 border border-cyan-400/40 shadow-xs flex items-center gap-1.5" title="Use this username or email to sign in">
+                        <i class="fa-solid fa-at text-cyan-400 text-[11px]"></i>Sign-in Username: <strong class="text-white font-mono font-bold">{{ Auth::user()->username }}</strong>
+                    </span>
                 </div>
                 <p class="text-xs text-blue-200 mt-1">{{ $doctor->specialization }} &bull; License: <span class="font-mono text-cyan-400 font-bold">{{ $doctor->license_number }}</span></p>
-                <p class="text-[11px] text-slate-400 mt-0.5">Consultation Fee: <span class="text-emerald-400 font-bold">${{ number_format($doctor->consultation_fee, 2) }}</span> &bull; Direct Phone: {{ $doctor->phone }}</p>
+                <p class="text-[11px] text-slate-300 mt-0.5">Consultation Fee: <span class="text-emerald-400 font-bold">${{ number_format($doctor->consultation_fee, 2) }}</span> &bull; Direct Phone: {{ $doctor->phone }} &bull; Sign in with: <code class="text-cyan-300 font-mono font-bold">{{ Auth::user()->username }}</code></p>
             </div>
         </div>
 

@@ -17,10 +17,14 @@
                     <i class="fa-solid fa-hospital-user"></i>
                 </div>
                 <div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3">
                         <h3 class="text-2xl font-black">{{ $patient->full_name }}</h3>
                         <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full text-xs font-mono font-bold">
                             UPI: {{ $patient->patient_code }}
+                        </span>
+                        <!-- Sign-in Username Badge -->
+                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 rounded-full text-xs font-mono font-bold flex items-center gap-1.5" title="Use this username or email to sign in">
+                            <i class="fa-solid fa-at text-cyan-400 text-[11px]"></i>Sign-in Username: <strong class="text-white font-mono font-bold">{{ Auth::user()->username }}</strong>
                         </span>
                     </div>
                     <div class="flex flex-wrap items-center gap-4 text-xs text-slate-300 mt-2">
@@ -28,6 +32,7 @@
                         <span><i class="fa-solid fa-venus-mars text-cyan-400 mr-1"></i> {{ $patient->gender }}</span>
                         <span><i class="fa-solid fa-droplet text-rose-400 mr-1"></i> Blood: <strong class="text-white">{{ $patient->blood_type ?? 'Unknown' }}</strong></span>
                         <span><i class="fa-solid fa-phone text-cyan-400 mr-1"></i> {{ $patient->phone }}</span>
+                        <span><i class="fa-solid fa-key text-cyan-400 mr-1"></i> Login: <code class="text-cyan-300 font-mono font-bold">{{ Auth::user()->username }}</code></span>
                     </div>
                 </div>
             </div>
