@@ -11,9 +11,9 @@ input[type="password"]::-ms-clear {
 </style>
 <div class="grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-800/60 ring-1 ring-white/10">
 
-    <!-- Left Login Form Panel -->
+   <!-- Left Login Form Panel -->
     <div class="lg:col-span-5 p-8 lg:p-12 flex flex-col justify-between">
-        <div>
+        <div class="w-full">
             <!-- Branding -->
             <div class="flex items-center gap-3.5 mb-8">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
@@ -64,28 +64,26 @@ input[type="password"]::-ms-clear {
                 </div>
 
                 <div>
-                    <div class="input-group" style="position: relative;">
-                        <label class="block text-xs font-bold text-slate-700">Password</label>
-                    </div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
                     <div class="relative">
-    <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-    
-    <input id="password" type="password" name="password" required
-           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
-           placeholder="••••••••"
-           oninput="toggleIconDisplay('password', 'toggle-span-login')">
-           
-    <span id="toggle-span-login" class="toggle-password" onclick="togglePasswordVisibility('password', 'toggle-icon')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; display: none;">
-        <i id="toggle-icon" class="fa fa-eye" style="color: #6b7280;"></i>
-    </span>
-</div>
+                        <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input id="password" type="password" name="password" required
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+                               placeholder="••••••••"
+                               oninput="toggleIconDisplay('password', 'toggle-span-login')">
+                               
+                        <span id="toggle-span-login" class="toggle-password" onclick="togglePasswordVisibility('password', 'toggle-icon')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10; display: none;">
+                            <i id="toggle-icon" class="fa fa-eye" style="color: #6b7280;"></i>
+                        </span>
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-between text-xs pt-1">
+                <div class="flex items-center justify-between text-xs pt-1 mb-2">
                     <label class="flex items-center gap-2 cursor-pointer text-slate-600 font-medium">
                         <input type="checkbox" name="remember" class="rounded text-cyan-600 focus:ring-cyan-500">
                         <span>Remember session</span>
                     </label>
+                    <a href="{{ route('password.request') }}" class="text-cyan-600 font-bold hover:underline">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs font-extrabold rounded-xl shadow-lg shadow-cyan-600/30 transition flex items-center justify-center gap-2">
@@ -95,7 +93,7 @@ input[type="password"]::-ms-clear {
         </div>
 
         <!-- Registration & Public Link -->
-        <div class="pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+        <div class="pt-6 mt-8 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>New patient? <a href="{{ route('register') }}" class="text-cyan-600 font-bold hover:underline">Register</a></span>
             <a href="{{ route('public.home') }}" class="text-slate-400 hover:text-slate-700 flex items-center gap-1"><i class="fa-solid fa-house"></i> Public Home</a>
         </div>

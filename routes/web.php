@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\AmbulanceController;
 use App\Http\Controllers\Admin\AmbulanceAdminController;
+use App\Http\Controllers\Admin\ForgotPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +56,19 @@ Route::get('/login/demo/{role}', [AuthController::class, 'demoLogin'])->name('lo
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+/* add the otp verification routes  */
+//-------------------------------------------------------------------------//
+// Forgot Password & OTP Flow
+Route::get('/forgot-password', [App\Http\Controllers\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/forgot-password/send-otp', [App\Http\Controllers\ForgotPasswordController::class, 'sendOtp'])->name('password.email');
+
+Route::get('/verify-otp', [App\Http\Controllers\ForgotPasswordController::class, 'showOtpForm'])->name('password.otp.form');
+Route::post('/verify-otp', [App\Http\Controllers\ForgotPasswordController::class, 'verifyOtp'])->name('password.otp.verify');
+
+Route::get('/reset-password', [App\Http\Controllers\ForgotPasswordController::class, 'showResetForm'])->name('password.reset.form');
+Route::post('/reset-password', [App\Http\Controllers\ForgotPasswordController::class, 'updatePassword'])->name('password.update');
+//--------------------------------------------------------------------------------//
 
 /*
 |--------------------------------------------------------------------------
