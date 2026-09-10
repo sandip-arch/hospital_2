@@ -10,12 +10,47 @@
     statusModal: false, 
     roomModal: false, 
     dischargeModal: false,
+    switchModal: false,
     selectedBedId: null, 
     selectedBedNum: '', 
     selectedRoomNum: '',
     selectedAdmissionId: null,
-    selectedPatientName: ''
+    selectedPatientName: '',
+    currentBedDesc: ''
 }">
+
+    <!-- Patient Emergency Policy Banner -->
+    @if(Auth::user()->isPatient() && ($myNonEmer = Auth::user()->currentNonEmergencyAdmission()))
+    <div class="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 p-4 rounded-2xl flex items-start gap-3 shadow-xs">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-bed text-base"></i>
+        </div>
+        <div>
+            <h5 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span>Active Inpatient Bed Assigned</span>
+                <span class="px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-200 text-amber-900">Bed #{{ $myNonEmer->bed->bed_number }}</span>
+            </h5>
+            <p class="text-xs text-slate-700 mt-1 leading-relaxed">
+                You already have a bed booked in <strong>Bed #{{ $myNonEmer->bed->bed_number }} (Room {{ $myNonEmer->bed->room->room_number }})</strong>. Emergency bed reservations are disabled while you are admitted.
+            </p>
+        </div>
+    </div>
+    @elseif(Auth::user()->isPatient())
+    <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-l-4 border-amber-500 p-4 rounded-2xl flex items-start gap-3 shadow-xs">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-truck-medical text-base"></i>
+        </div>
+        <div>
+            <h5 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span>Patient Inpatient Policy: Emergency Beds Only</span>
+                <span class="px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-200 text-amber-800">Self-Booking</span>
+            </h5>
+            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                As a patient, you can directly book available <strong>Emergency Beds</strong> for acute triage and immediate care. Beds in <strong>ICU Suites</strong>, <strong>Private Rooms</strong>, <strong>Semi-Private</strong>, and <strong>General Wards</strong> are clinically managed and require admission by an attending doctor or hospital administrator.
+            </p>
+        </div>
+    </div>
+    @endif
 
     <!-- Stats Bar -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
@@ -53,6 +88,7 @@
 
             <select name="room_type" onchange="this.form.submit()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500">
                 <option value="">All Room Types</option>
+                <option value="Emergency" {{ request('room_type') == 'Emergency' ? 'selected' : '' }}>Emergency Triage</option>
                 <option value="ICU" {{ request('room_type') == 'ICU' ? 'selected' : '' }}>ICU Suites</option>
                 <option value="Private" {{ request('room_type') == 'Private' ? 'selected' : '' }}>Private Rooms</option>
                 <option value="Semi-Private" {{ request('room_type') == 'Semi-Private' ? 'selected' : '' }}>Semi-Private Rooms</option>
@@ -83,9 +119,14 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h4 class="font-black text-slate-900 text-base">Room {{ $room->room_number }}</h4>
-                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $room->room_type === 'ICU' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-cyan-50 text-cyan-700 border border-cyan-200' }}">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $room->isEmergency() ? 'bg-rose-50 text-rose-700 border border-rose-200' : ($room->room_type === 'ICU' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-cyan-50 text-cyan-700 border border-cyan-200') }}">
                             {{ $room->room_type }}
                         </span>
+                        @if($room->isEmergency())
+                        <span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-rose-600 text-white uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-bolt-lightning text-[8px]"></i> Emergency
+                        </span>
+                        @endif
                     </div>
                     <p class="text-[11px] text-slate-500 mt-0.5">{{ $room->department->name ?? 'General' }} &bull; ${{ number_format($room->daily_rate, 2) }}/day</p>
                 </div>
@@ -95,37 +136,112 @@
             <!-- Beds Grid in this Room -->
             <div class="grid grid-cols-2 gap-3">
                 @foreach($room->beds as $bed)
-                <div class="p-3.5 rounded-2xl border transition relative {{ $bed->status === 'available' ? 'bg-emerald-50/50 border-emerald-200 hover:bg-emerald-100/50' : ($bed->status === 'occupied' ? 'bg-rose-50/50 border-rose-200' : 'bg-amber-50/50 border-amber-200') }}">
+                @php
+                    $isAvail = $bed->status === 'available';
+                    $isOccupied = $bed->status === 'occupied';
+                    $isEmer = $bed->isEmergency();
+                    $isMyBed = Auth::user()->isPatient() && $bed->currentAdmission && (int) ($bed->currentAdmission->patient_id ?? 0) === (int) (Auth::user()->patient?->id ?? -1);
+                    
+                    $cardClass = 'bg-amber-50/50 border-amber-200';
+                    if ($isMyBed) {
+                        $cardClass = 'bg-gradient-to-b from-cyan-50/90 via-sky-50/40 to-white border-2 border-cyan-500 shadow-md shadow-cyan-500/10 ring-2 ring-cyan-400/20';
+                    } elseif ($isOccupied) {
+                        $cardClass = 'bg-rose-50/50 border-rose-200';
+                    } elseif ($isAvail) {
+                        $cardClass = $isEmer 
+                            ? 'bg-gradient-to-b from-rose-50/30 to-rose-50/70 border-rose-200/90 hover:border-rose-300' 
+                            : 'bg-emerald-50/40 border-emerald-200/80 hover:bg-emerald-50/70 hover:border-emerald-300';
+                    }
+                @endphp
+                <div class="p-3.5 rounded-2xl border transition relative {{ $cardClass }}">
                     
                     <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-900 text-xs">Bed #{{ $bed->bed_number }}</span>
-                        <span class="w-2.5 h-2.5 rounded-full {{ $bed->status === 'available' ? 'bg-emerald-500' : ($bed->status === 'occupied' ? 'bg-rose-500' : 'bg-amber-500') }}"></span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-slate-900 text-xs">Bed #{{ $bed->bed_number }}</span>
+                            @if($isMyBed)
+                            <span class="px-1.5 py-0.5 rounded text-[8px] font-black bg-cyan-600 text-white uppercase tracking-wider flex items-center gap-0.5 shadow-xs">
+                                <i class="fa-solid fa-user-check text-[7px]"></i> Your Bed
+                            </span>
+                            @elseif($isEmer && $isAvail)
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-700 uppercase tracking-wider">ER</span>
+                            @endif
+                        </div>
+                        <span class="w-2.5 h-2.5 rounded-full {{ $isMyBed ? 'bg-cyan-500 ring-4 ring-cyan-200 animate-pulse' : ($isAvail ? ($isEmer ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500') : ($isOccupied ? 'bg-rose-500' : 'bg-amber-500')) }}"></span>
                     </div>
 
                     @if($bed->status === 'occupied')
                         @if(Auth::user()->isPatient())
-                        <div class="mt-2 space-y-1 text-[11px]">
-                            <p class="font-bold text-slate-700">Currently Occupied</p>
-                            <p class="text-slate-400 text-[10px]">Inpatient Care Active</p>
-                            <div class="pt-2">
-                                <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-md text-[10px] font-bold">Occupied</span>
+                            @if($isMyBed)
+                            <div class="mt-2 space-y-1.5 text-[11px]">
+                                <div class="p-2 bg-cyan-100/60 border border-cyan-200 rounded-xl">
+                                    <div class="flex items-center gap-1.5 text-cyan-900 font-extrabold text-xs">
+                                        <i class="fa-solid fa-circle-check text-cyan-600 text-xs"></i>
+                                        <span>This Bed is for You</span>
+                                    </div>
+                                    <p class="text-[10px] text-cyan-800/90 mt-0.5 font-medium">
+                                        Room {{ $room->room_number }} &bull; {{ $room->room_type }}
+                                    </p>
+                                </div>
+                                <div class="pt-0.5 text-[10px] text-slate-600 space-y-0.5">
+                                    <p class="truncate"><span class="text-slate-400 font-medium">Doctor:</span> <strong class="text-slate-800">{{ Str::startsWith($bed->currentAdmission->doctor?->user?->name, 'Dr.') ? $bed->currentAdmission->doctor->user->name : 'Dr. ' . ($bed->currentAdmission->doctor?->user?->name ?? 'Specialist') }}</strong></p>
+                                    <p><span class="text-slate-400 font-medium">Stay:</span> <strong class="text-slate-800">{{ $bed->currentAdmission->stay_days }} Day(s)</strong> (Active)</p>
+                                </div>
                             </div>
-                        </div>
+                            @else
+                            <div class="mt-2 space-y-1 text-[11px]">
+                                <p class="font-bold text-slate-700">Currently Occupied</p>
+                                <p class="text-slate-400 text-[10px]">Inpatient Care Active</p>
+                                <div class="pt-2">
+                                    <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-md text-[10px] font-bold">Occupied</span>
+                                </div>
+                            </div>
+                            @endif
                         @elseif($bed->currentAdmission)
                         <div class="mt-2 space-y-0.5 text-[11px]">
                             <p class="font-bold text-slate-900 truncate">{{ $bed->currentAdmission->patient->full_name }}</p>
                             <p class="text-slate-500 font-mono text-[10px]">{{ $bed->currentAdmission->patient->patient_code }}</p>
-                            <p class="text-slate-600 text-[10px]">Dr. {{ $bed->currentAdmission->doctor->user->name ?? 'Doctor' }}</p>
+                            <p class="text-slate-600 text-[10px] truncate">{{ Str::startsWith($bed->currentAdmission->doctor?->user?->name, 'Dr.') ? $bed->currentAdmission->doctor->user->name : 'Dr. ' . ($bed->currentAdmission->doctor?->user?->name ?? 'Doctor') }}</p>
                             
-                            <div class="pt-2 flex items-center justify-between">
-                                <span class="text-[10px] text-slate-400 font-semibold">{{ $bed->currentAdmission->stay_days }}d Stay</span>
-                                @if(Auth::user()->canDischargeAdmission($bed->currentAdmission))
+                            <div class="mt-2 pt-2 border-t border-rose-100/90 space-y-1.5">
+                                <div class="flex items-center justify-between text-[10px]">
+                                    <span class="text-slate-400 font-semibold">Stay:</span>
+                                    <span class="font-bold text-slate-700">{{ $bed->currentAdmission->stay_days }} Day(s)</span>
+                                </div>
+                                
+                                @php
+                                    $canSwitch = Auth::user()->canSwitchBed($bed->currentAdmission);
+                                    $canDischarge = Auth::user()->canDischargeAdmission($bed->currentAdmission);
+                                @endphp
+
+                                @if($canSwitch && $canDischarge)
+                                <div class="grid grid-cols-2 gap-1.5 w-full">
+                                    <button type="button" 
+                                            @click="selectedAdmissionId = {{ $bed->currentAdmission->id }}; selectedPatientName = '{{ addslashes($bed->currentAdmission->patient->full_name) }}'; currentBedDesc = 'Bed #{{ $bed->bed_number }} (Room {{ $room->room_number }})'; switchModal = true"
+                                            class="w-full py-1 px-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[9.5px] font-bold shadow-xs transition flex items-center justify-center gap-1"
+                                            title="Transfer patient to another available bed">
+                                        <i class="fa-solid fa-arrows-rotate text-[8px]"></i> Switch
+                                    </button>
+                                    <button type="button" @click="selectedAdmissionId = {{ $bed->currentAdmission->id }}; selectedPatientName = '{{ addslashes($bed->currentAdmission->patient->full_name) }}'; dischargeModal = true"
+                                            class="w-full py-1 px-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[9.5px] font-bold shadow-xs transition flex items-center justify-center gap-1"
+                                            title="Discharge patient">
+                                        <i class="fa-solid fa-arrow-right-from-bracket text-[8px] text-rose-600"></i> Discharge
+                                    </button>
+                                </div>
+                                @elseif($canSwitch)
+                                <button type="button" 
+                                        @click="selectedAdmissionId = {{ $bed->currentAdmission->id }}; selectedPatientName = '{{ addslashes($bed->currentAdmission->patient->full_name) }}'; currentBedDesc = 'Bed #{{ $bed->bed_number }} (Room {{ $room->room_number }})'; switchModal = true"
+                                        class="w-full py-1 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[10px] font-bold shadow-xs transition flex items-center justify-center gap-1"
+                                        title="Transfer patient to another available bed">
+                                    <i class="fa-solid fa-arrows-rotate text-[8px]"></i> Switch Bed
+                                </button>
+                                @elseif($canDischarge)
                                 <button type="button" @click="selectedAdmissionId = {{ $bed->currentAdmission->id }}; selectedPatientName = '{{ addslashes($bed->currentAdmission->patient->full_name) }}'; dischargeModal = true"
-                                        class="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[10px] font-bold shadow-xs">
-                                    Discharge
+                                        class="w-full py-1 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[10px] font-bold shadow-xs transition flex items-center justify-center gap-1"
+                                        title="Discharge patient">
+                                    <i class="fa-solid fa-arrow-right-from-bracket text-[8.5px] text-rose-600"></i> Discharge Patient
                                 </button>
                                 @else
-                                <span class="text-[9px] text-slate-400 font-medium italic">Dr. {{ $bed->currentAdmission->doctor?->user?->name ?? 'Specialist' }}</span>
+                                <p class="text-[9px] text-slate-400 font-medium italic text-right truncate">{{ Str::startsWith($bed->currentAdmission->doctor?->user?->name, 'Dr.') ? $bed->currentAdmission->doctor->user->name : 'Dr. ' . ($bed->currentAdmission->doctor?->user?->name ?? 'Specialist') }}</p>
                                 @endif
                             </div>
                         </div>
@@ -145,12 +261,50 @@
                             @endif
                         </div>
                         @endif
+
                     @elseif($bed->status === 'available')
                     <div class="mt-4 text-center">
-                        <button @click="selectedBedId = {{ $bed->id }}; selectedBedNum = '{{ $bed->bed_number }}'; selectedRoomNum = '{{ $room->room_number }}'; admitModal = true"
-                                class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-plus text-[10px]"></i> {{ Auth::user()->isPatient() ? 'Request Bed' : 'Admit Patient' }}
-                        </button>
+                        @if($bed->canBeBookedBy(Auth::user()))
+                            @if(Auth::user()->isPatient())
+                            <button @click="selectedBedId = {{ $bed->id }}; selectedBedNum = '{{ $bed->bed_number }}'; selectedRoomNum = '{{ $room->room_number }}'; admitModal = true"
+                                    class="w-full py-2 px-3 bg-gradient-to-r from-rose-600 via-rose-500 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-black shadow-md shadow-rose-600/25 hover:shadow-lg hover:shadow-rose-600/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 flex items-center justify-center gap-2 group">
+                                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-truck-medical text-[10px] text-white"></i>
+                                </span>
+                                <span class="tracking-wide">Request Bed</span>
+                                <i class="fa-solid fa-arrow-right text-[9px] opacity-75 group-hover:translate-x-1 transition-transform"></i>
+                            </button>
+                            @elseif($isEmer)
+                            <button @click="selectedBedId = {{ $bed->id }}; selectedBedNum = '{{ $bed->bed_number }}'; selectedRoomNum = '{{ $room->room_number }}'; admitModal = true"
+                                    class="w-full py-2 px-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-bold shadow-sm hover:shadow-md hover:shadow-rose-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-truck-medical text-[11px]"></i>
+                                <span>Admit to ER</span>
+                            </button>
+                            @else
+                            <button @click="selectedBedId = {{ $bed->id }}; selectedBedNum = '{{ $bed->bed_number }}'; selectedRoomNum = '{{ $room->room_number }}'; admitModal = true"
+                                    class="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-sm hover:shadow-md hover:shadow-emerald-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>Admit Patient</span>
+                            </button>
+                            @endif
+                        @else
+                        {{-- Locked for patient self-booking --}}
+                        @if(Auth::user()->isPatient() && $bed->isEmergency() && ($existingNonEmer = Auth::user()->currentNonEmergencyAdmission()))
+                        <div class="w-full py-1.5 px-2 bg-amber-50 border border-amber-200/90 rounded-xl text-[10px] font-semibold text-amber-800 flex flex-col items-center justify-center gap-0.5 select-none text-center" title="You already have a bed booked in Bed #{{ $existingNonEmer->bed->bed_number }} (Room {{ $existingNonEmer->bed->room?->room_number }})">
+                            <span class="font-black text-amber-900 flex items-center gap-1 text-[9.5px]">
+                                <i class="fa-solid fa-ban text-[8.5px] text-amber-600"></i> Locked
+                            </span>
+                            <span class="text-[9px] text-amber-700 leading-tight">
+                                You already have a bed booked in Bed #{{ $existingNonEmer->bed->bed_number }}
+                            </span>
+                        </div>
+                        @else
+                        <div class="w-full py-2 px-2.5 bg-slate-100/80 border border-dashed border-slate-300/80 rounded-xl text-[10px] font-semibold text-slate-400 flex items-center justify-center gap-1.5 select-none" title="Only doctors and hospital staff can book {{ $room->room_type }} beds">
+                            <i class="fa-solid fa-lock text-[9px] text-slate-400"></i>
+                            <span>Doctor / Staff Referral Only</span>
+                        </div>
+                        @endif
+                        @endif
                     </div>
                     @else
                     <div class="mt-3 text-center">
@@ -185,7 +339,7 @@
     <div x-show="admitModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak>
         <div @click.outside="admitModal = false" class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
             <h4 class="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-bed text-emerald-600"></i> {{ Auth::user()->isPatient() ? 'Request Inpatient Bed' : 'Admit to Room' }} <span x-text="selectedRoomNum"></span> (Bed <span x-text="selectedBedNum"></span>)
+                <i class="fa-solid fa-bed text-emerald-600"></i> {{ Auth::user()->isPatient() ? 'Request Emergency Bed' : 'Admit Patient to Room' }} <span x-text="selectedRoomNum"></span> (Bed <span x-text="selectedBedNum"></span>)
             </h4>
 
             <form action="{{ route('facilities.admit') }}" method="POST" class="space-y-4">
@@ -232,8 +386,11 @@
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" @click="admitModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md">{{ Auth::user()->isPatient() ? 'Submit Request' : 'Confirm Admission' }}</button>
+                    <button type="button" @click="admitModal = false" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r {{ Auth::user()->isPatient() ? 'from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-rose-600/20' : 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/20' }} text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-1.5">
+                        <i class="fa-solid {{ Auth::user()->isPatient() ? 'fa-paper-plane' : 'fa-check' }} text-[10px]"></i>
+                        {{ Auth::user()->isPatient() ? 'Submit Emergency Request' : 'Confirm Admission' }}
+                    </button>
                 </div>
             </form>
         </div>
@@ -289,6 +446,7 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Room Type *</label>
                         <select name="room_type" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            <option value="Emergency">Emergency</option>
                             <option value="ICU">ICU</option>
                             <option value="Private">Private</option>
                             <option value="Semi-Private">Semi-Private</option>
@@ -324,6 +482,59 @@
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" @click="roomModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancel</button>
                     <button type="submit" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md">Provision Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Switch Bed / Inpatient Transfer (Admin & Attending Doctor) -->
+    <div x-show="switchModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak>
+        <div @click.outside="switchModal = false" class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <h4 class="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-arrows-rotate text-indigo-600"></i> Switch Inpatient Bed
+            </h4>
+
+            <div class="mb-4 p-3.5 bg-indigo-50/80 rounded-2xl border border-indigo-100 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider block">Patient</span>
+                    <strong class="text-slate-900 text-xs" x-text="selectedPatientName"></strong>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider block">Current Bed</span>
+                    <span class="text-xs font-mono font-bold text-slate-700" x-text="currentBedDesc"></span>
+                </div>
+            </div>
+
+            <form :action="'{{ url('facilities/admissions') }}/' + selectedAdmissionId + '/switch-bed'" method="POST" class="space-y-4">
+                @csrf
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Select Destination Bed *</label>
+                    <select name="target_bed_id" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- Choose an Available Bed --</option>
+                        @foreach($availableBeds as $ab)
+                        <option value="{{ $ab->id }}">
+                            Room {{ $ab->room->room_number }} ({{ $ab->room->room_type }}) &bull; Bed #{{ $ab->bed_number }} &bull; ${{ number_format($ab->room->daily_rate, 2) }}/day &bull; {{ $ab->room->department->name ?? 'General' }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Reason for Bed Transfer / Notes</label>
+                    <textarea name="switch_reason" rows="2" placeholder="e.g. Clinical condition upgrade, ICU step-down, patient request, isolation protocol" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-500 flex items-start gap-2.5">
+                    <i class="fa-solid fa-bell text-indigo-500 mt-0.5 shrink-0"></i>
+                    <span class="leading-snug">The patient will automatically receive a system notification in their patient portal with their new bed & room assignment. The previous bed will immediately enter sanitization.</span>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" @click="switchModal = false" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Confirm Bed Transfer
+                    </button>
                 </div>
             </form>
         </div>

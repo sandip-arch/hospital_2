@@ -89,4 +89,16 @@ class Patient extends Model
     {
         return $this->hasMany(AmbulanceBooking::class);
     }
+
+    public function currentNonEmergencyAdmission(): ?Admission
+    {
+        return $this->admissions()
+            ->with('bed.room.department')
+            ->where('status', 'admitted')
+            ->get()
+            ->first(function ($admission) {
+                return $admission->bed && !$admission->bed->isEmergency();
+            });
+    }
 }
+

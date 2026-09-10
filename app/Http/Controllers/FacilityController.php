@@ -10,6 +10,7 @@ use App\Models\Admission;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Department;
+use App\Models\Notification;
 use App\Services\BillingService;
 use App\Services\AuditService;
 
@@ -42,7 +43,13 @@ class FacilityController extends Controller
             'maintenance_beds' => Bed::where('status', 'maintenance')->count(),
         ];
 
-        return view('facilities.bed-tracker', compact('rooms', 'departments', 'patients', 'doctors', 'stats'));
+        $availableBeds = Bed::with('room.department')
+            ->where('status', 'available')
+            ->orderBy('room_id')
+            ->orderBy('bed_number')
+            ->get();
+
+        return view('facilities.bed-tracker', compact('rooms', 'departments', 'patients', 'doctors', 'stats', 'availableBeds'));
     }
 
     public function admissions(Request $request)
@@ -62,7 +69,13 @@ class FacilityController extends Controller
 
         $admissions = $query->orderBy('admission_date', 'desc')->paginate(12)->withQueryString();
 
-        return view('facilities.admissions', compact('admissions'));
+        $availableBeds = Bed::with('room.department')
+            ->where('status', 'available')
+            ->orderBy('room_id')
+            ->orderBy('bed_number')
+            ->get();
+
+        return view('facilities.admissions', compact('admissions', 'availableBeds'));
     }
 
     public function admit(Request $request)
@@ -85,9 +98,27 @@ class FacilityController extends Controller
             'admission_reason' => 'nullable|string',
         ]);
 
-        $bed = Bed::findOrFail($validated['bed_id']);
+        $bed = Bed::with('room.department')->findOrFail($validated['bed_id']);
         if ($bed->status !== 'available') {
             return back()->with('error', 'The selected bed is not currently available for admission.');
+        }
+
+        // Strict Inpatient Admission Rule:
+        // Patients can only book Emergency beds by themselves.
+        // Doctors, Admins, Superadmins, and Staff can book ICU beds and all other beds for any patient.
+        if ($user->isPatient() && !$bed->isEmergency()) {
+            return back()->with('error', 'Inpatient Access Restriction: Patients can only book Emergency beds directly. ICU, Private, and General Ward beds must be assigned by an attending physician or hospital administration.');
+        }
+
+        // Inpatient Concurrency Rule:
+        // If a patient already has a bed booked (by himself or any doctor, admin, or superadmin) other than emergency,
+        // the patient cannot book an emergency bed.
+        if ($user->isPatient()) {
+            $existingNonEmer = $user->currentNonEmergencyAdmission();
+            if ($existingNonEmer && $existingNonEmer->bed) {
+                $bedDesc = "Bed #{$existingNonEmer->bed->bed_number}" . ($existingNonEmer->bed->room ? " (Room {$existingNonEmer->bed->room->room_number})" : '');
+                return back()->with('error', "You already have a bed booked in {$bedDesc}");
+            }
         }
 
         $admission = Admission::create([
@@ -104,6 +135,73 @@ class FacilityController extends Controller
         AuditService::log('ADMIT', 'admissions', $admission->id, "Admitted Patient ID {$patientId} to Bed #{$bed->bed_number} (Room {$bed->room->room_number})");
 
         return back()->with('success', $user->isPatient() ? "Admission request submitted for Bed {$bed->bed_number} in Room {$bed->room->room_number}!" : "Patient admitted successfully to Bed {$bed->bed_number}!");
+    }
+
+    public function switchBed(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        // 1. Resolve admission
+        $admission = Admission::with(['patient.user', 'bed.room.department', 'doctor.user'])->findOrFail($id);
+
+        // 2. Validate user authorization
+        if (!$user->canSwitchBed($admission)) {
+            abort(403, 'Unauthorized. Only the assigned attending doctor, a receptionist, or an administrator can switch beds for this patient.');
+        }
+
+        // 3. Ensure admission is currently active
+        if ($admission->status !== 'admitted') {
+            return back()->with('error', "Cannot switch bed. Admission #ADM-{$admission->id} is {$admission->status}.");
+        }
+
+        $validated = $request->validate([
+            'target_bed_id' => 'required|exists:beds,id',
+            'switch_reason' => 'nullable|string|max:500',
+        ]);
+
+        if ((int)$validated['target_bed_id'] === (int)$admission->bed_id) {
+            return back()->with('error', 'The destination bed must be different from the patient\'s current bed.');
+        }
+
+        $newBed = Bed::with('room.department')->findOrFail($validated['target_bed_id']);
+        if ($newBed->status !== 'available') {
+            return back()->with('error', "Selected Bed #{$newBed->bed_number} (Room {$newBed->room->room_number}) is not currently available for transfer.");
+        }
+
+        $oldBed = $admission->bed;
+
+        // 4. Release old bed to cleaning
+        if ($oldBed) {
+            $oldBed->update(['status' => 'cleaning']);
+        }
+
+        // 5. Occupy new bed
+        $newBed->update(['status' => 'occupied']);
+
+        // 6. Update admission record
+        $switchNote = "\n[Bed Switch " . now()->format('Y-m-d H:i') . " by {$user->name}]: Transferred from Bed #" . ($oldBed?->bed_number ?? 'N/A') . " (Room " . ($oldBed?->room?->room_number ?? 'N/A') . ") to Bed #{$newBed->bed_number} (Room {$newBed->room->room_number}). " . ($validated['switch_reason'] ? "Reason: {$validated['switch_reason']}" : '');
+        $admission->update([
+            'bed_id' => $newBed->id,
+            'admission_reason' => trim(($admission->admission_reason ?? '') . $switchNote),
+        ]);
+
+        // 7. Audit log
+        AuditService::log('TRANSFER', 'admissions', $admission->id, "Transferred Patient {$admission->patient->full_name} from Bed #" . ($oldBed?->bed_number ?? 'N/A') . " (Room " . ($oldBed?->room?->room_number ?? 'N/A') . ") to Bed #{$newBed->bed_number} (Room {$newBed->room->room_number})");
+
+        // 8. Dispatch notification to the patient (if user account exists)
+        if ($admission->patient && $admission->patient->user) {
+            $deptName = $newBed->room->department->name ?? 'General';
+            $noteText = !empty($validated['switch_reason']) ? " Note: {$validated['switch_reason']}" : '';
+            Notification::create([
+                'user_id' => $admission->patient->user->id,
+                'title' => 'Inpatient Bed Transfer Update',
+                'message' => "Your hospital bed has been switched to Bed #{$newBed->bed_number} in Room {$newBed->room->room_number} ({$newBed->room->room_type}, {$deptName}).{$noteText}",
+                'type' => 'system',
+                'is_read' => false,
+            ]);
+        }
+
+        return back()->with('success', "Patient {$admission->patient->full_name} successfully transferred to Bed #{$newBed->bed_number} (Room {$newBed->room->room_number})! Previous bed marked for cleaning.");
     }
 
     public function discharge(Request $request, $id)
@@ -204,7 +302,7 @@ class FacilityController extends Controller
 
         $validated = $request->validate([
             'room_number' => 'required|string|max:20|unique:rooms',
-            'room_type' => 'required|in:ICU,Private,Semi-Private,General Ward,Operating Theater',
+            'room_type' => 'required|in:Emergency,ICU,Private,Semi-Private,General Ward,Operating Theater',
             'department_id' => 'required|exists:departments,id',
             'daily_rate' => 'required|numeric|min:0',
             'beds_count' => 'required|integer|min:1|max:20',

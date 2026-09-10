@@ -40,4 +40,37 @@ class Bed extends Model
             default => 'bg-gray-100 text-gray-800',
         };
     }
+
+    public function isEmergency(): bool
+    {
+        return (bool) $this->room?->isEmergency();
+    }
+
+    public function canBeBookedBy(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        // Doctors, Admins, Superadmins, Staff can book ANY bed
+        if ($user->isAdmin() || $user->isDoctor() || $user->isStaff()) {
+            return true;
+        }
+
+        // Patients can only book Emergency beds and only if they don't already have an active non-emergency bed
+        if ($user->isPatient()) {
+            if (!$this->isEmergency()) {
+                return false;
+            }
+
+            if ($user->currentNonEmergencyAdmission()) {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 }
+

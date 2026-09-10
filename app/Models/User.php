@@ -226,6 +226,25 @@ class User extends Authenticatable
         return $this->isAdmin() || $this->isReceptionist() || $this->isDoctor();
     }
 
+    public function canSwitchBed(?Admission $admission): bool
+    {
+        if (!$admission || $admission->status !== 'admitted') {
+            return false;
+        }
+
+        // 1. Superadmin or Hospital Admin
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // 2. The assigned attending doctor under whom the patient is admitted
+        if ($this->isDoctor() && $this->doctor && (int)$this->doctor->id === (int)$admission->doctor_id) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function primaryRole(): string
     {
         $role = $this->roles->first();
@@ -252,4 +271,10 @@ class User extends Authenticatable
             default => 'bg-gray-100 text-gray-800 border-gray-200',
         };
     }
+
+    public function currentNonEmergencyAdmission(): ?Admission
+    {
+        return $this->patient?->currentNonEmergencyAdmission();
+    }
 }
+
