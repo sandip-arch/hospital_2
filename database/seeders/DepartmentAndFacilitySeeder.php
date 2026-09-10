@@ -36,6 +36,7 @@ class DepartmentAndFacilitySeeder extends Seeder
 
         // Create Rooms & Beds
         $roomConfigs = [
+            ['room_number' => 'ER-101', 'room_type' => 'Emergency', 'dept' => 'EMER', 'daily_rate' => 200.00, 'beds' => 4],
             ['room_number' => 'ICU-101', 'room_type' => 'ICU', 'dept' => 'EMER', 'daily_rate' => 450.00, 'beds' => 4],
             ['room_number' => 'ICU-102', 'room_type' => 'ICU', 'dept' => 'CARD', 'daily_rate' => 500.00, 'beds' => 4],
             ['room_number' => 'PRV-201', 'room_type' => 'Private', 'dept' => 'CARD', 'daily_rate' => 250.00, 'beds' => 1],

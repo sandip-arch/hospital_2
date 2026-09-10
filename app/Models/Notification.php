@@ -67,6 +67,11 @@ class Notification extends Model
             return route('billing.index');
         }
 
+        // 5. Inpatient Facilities & Bed Tracker
+        if (stripos($this->title, 'bed') !== false || stripos($this->message, 'bed') !== false) {
+            return route('facilities.bed-tracker');
+        }
+
         // Default
         return route('communication.notifications');
     }

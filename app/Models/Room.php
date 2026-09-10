@@ -37,4 +37,21 @@ class Room extends Model
     {
         return $this->beds()->where('status', 'available')->count();
     }
+
+    public function isEmergency(): bool
+    {
+        if (strcasecmp($this->room_type, 'Emergency') === 0) {
+            return true;
+        }
+
+        if ($this->department && (
+            strcasecmp($this->department->code ?? '', 'EMER') === 0 ||
+            stripos($this->department->name ?? '', 'emergency') !== false
+        )) {
+            return true;
+        }
+
+        return stripos($this->room_number, 'ER-') === 0 || stripos($this->room_number, 'EMER') === 0;
+    }
 }
+

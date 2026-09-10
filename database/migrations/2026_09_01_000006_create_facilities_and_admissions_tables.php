@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->increments('id');
             $table->string('room_number', 20)->unique();
-            $table->enum('room_type', ['ICU', 'Private', 'Semi-Private', 'General Ward', 'Operating Theater']);
+            $table->enum('room_type', ['Emergency', 'ICU', 'Private', 'Semi-Private', 'General Ward', 'Operating Theater']);
             $table->unsignedInteger('department_id');
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
             $table->decimal('daily_rate', 10, 2);

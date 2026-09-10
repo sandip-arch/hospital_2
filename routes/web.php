@@ -132,6 +132,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/facilities/bed-tracker', [FacilityController::class, 'bedTracker'])->name('facilities.bed-tracker');
     Route::get('/facilities/admissions', [FacilityController::class, 'admissions'])->name('facilities.admissions');
     Route::post('/facilities/admit', [FacilityController::class, 'admit'])->name('facilities.admit');
+    Route::post('/facilities/admissions/{id}/switch-bed', [FacilityController::class, 'switchBed'])->name('facilities.admissions.switch-bed');
     Route::post('/facilities/discharge/{id}', [FacilityController::class, 'discharge'])->name('facilities.discharge');
     Route::post('/facilities/beds/{id}/status', [FacilityController::class, 'updateBedStatus'])->name('facilities.beds.updateStatus');
     Route::post('/facilities/rooms', [FacilityController::class, 'storeRoom'])->name('facilities.rooms.store');
