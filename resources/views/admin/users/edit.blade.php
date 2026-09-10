@@ -5,7 +5,7 @@
 @section('header_subtitle', 'Update personnel credentials, assigned role, and status')
 
 @section('content')
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="max-w-3xl mx-auto space-y-6" x-data="{ selectedRole: '{{ $user->primaryRole() }}' }">
 
     <div class="flex items-center justify-between">
         <a href="{{ route('admin.users.index') }}" class="text-xs font-bold text-slate-500 hover:text-purple-600 flex items-center gap-1.5 transition">
@@ -24,8 +24,9 @@
                 <label class="block text-xs font-bold text-slate-700 mb-2">System Role *</label>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     @foreach($roles as $r)
-                    <label class="p-3 rounded-2xl border cursor-pointer transition flex items-center gap-2 {{ $user->hasRole($r->name) ? 'bg-purple-50 border-purple-500 text-purple-900 font-bold' : 'border-slate-200 text-slate-700' }}">
-                        <input type="radio" name="role" value="{{ $r->name }}" {{ $user->hasRole($r->name) ? 'checked' : '' }} required class="text-purple-600 focus:ring-purple-500">
+                    <label class="p-3 rounded-2xl border cursor-pointer transition flex items-center gap-2"
+                           :class="selectedRole === '{{ $r->name }}' ? 'bg-purple-50 border-purple-500 text-purple-900 font-bold' : 'border-slate-200 text-slate-700 hover:bg-slate-50'">
+                        <input type="radio" name="role" value="{{ $r->name }}" x-model="selectedRole" required class="text-purple-600 focus:ring-purple-500">
                         <span class="text-xs">{{ $r->display_name ?? ucfirst($r->name) }}</span>
                     </label>
                     @endforeach
@@ -67,6 +68,35 @@
                         <option value="suspended" {{ $user->status === 'suspended' ? 'selected' : '' }}>Suspended</option>
                         <option value="inactive" {{ $user->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Driver Specific Details -->
+            <div x-show="selectedRole === 'driver'" class="p-5 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-4" x-cloak>
+                <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-truck-medical"></i> Ambulance Driver Profile
+                </h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Commercial Driver License (CDL) *</label>
+                        <input type="text" name="driver_license_number" value="{{ old('driver_license_number', $user->ambulanceDriver?->license_number) }}" placeholder="e.g. DL-AMB-2026-04"
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Direct Contact Phone *</label>
+                        <input type="text" name="driver_phone" value="{{ old('driver_phone', $user->ambulanceDriver?->contact_number) }}" placeholder="+1 (555) 019-4400"
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Duty Status *</label>
+                        <select name="driver_status" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="on_duty" {{ ($user->ambulanceDriver?->status ?? 'on_duty') === 'on_duty' ? 'selected' : '' }}>On Duty (Available for Dispatches)</option>
+                            <option value="off_duty" {{ ($user->ambulanceDriver?->status ?? '') === 'off_duty' ? 'selected' : '' }}>Off Duty</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 

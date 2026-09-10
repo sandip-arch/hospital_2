@@ -11,13 +11,14 @@ use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\DoctorAvailability;
 use App\Models\Staff;
+use App\Models\AmbulanceDriver;
 use App\Services\AuditService;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::with(['roles', 'doctor.department', 'staff.department', 'patient']);
+        $query = User::with(['roles', 'doctor.department', 'staff.department', 'patient', 'ambulanceDriver']);
 
         if ($request->filled('role')) {
             $role = $request->role;
@@ -54,6 +55,22 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // Handle role name -> role_id if role name was submitted
+        if ($request->filled('role') && !$request->filled('role_id')) {
+            $roleObj = Role::where('name', $request->role)->first();
+            if ($roleObj) {
+                $request->merge(['role_id' => $roleObj->id]);
+            }
+        }
+        if (!$request->has('status')) {
+            $request->merge(['status' => 'active']);
+        }
+        if ($request->filled('doctor_department_id') && !$request->filled('department_id')) {
+            $request->merge(['department_id' => $request->doctor_department_id]);
+        } elseif ($request->filled('staff_department_id') && !$request->filled('department_id')) {
+            $request->merge(['department_id' => $request->staff_department_id]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'username' => 'required|string|max:50|unique:users',
@@ -70,6 +87,10 @@ class UserController extends Controller
             // Staff fields
             'job_title' => 'nullable|string|max:100',
             'staff_phone' => 'nullable|string|max:20',
+            // Driver fields
+            'driver_license_number' => 'nullable|string|max:50',
+            'driver_phone' => 'nullable|string|max:20',
+            'driver_status' => 'nullable|in:on_duty,off_duty',
         ]);
 
         $user = User::create([
@@ -112,6 +133,13 @@ class UserController extends Controller
                 'phone' => $validated['staff_phone'] ?? '+1 (555) 000-0000',
                 'hire_date' => now()->toDateString(),
             ]);
+        } elseif ($role->name === 'driver') {
+            AmbulanceDriver::create([
+                'user_id' => $user->id,
+                'license_number' => $request->input('driver_license_number') ?: ($request->input('license_number') ?: 'DRV-' . strtoupper(uniqid())),
+                'contact_number' => $request->input('driver_phone') ?: ($request->input('contact_number') ?: '+1 (555) 000-0000'),
+                'status' => $request->input('driver_status') ?: 'on_duty',
+            ]);
         }
 
         AuditService::log('CREATE', 'users', $user->id, "Admin created user {$user->name} with role {$role->name}");
@@ -121,7 +149,7 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        $user = User::with(['roles', 'doctor', 'staff'])->findOrFail($id);
+        $user = User::with(['roles', 'doctor', 'staff', 'ambulanceDriver'])->findOrFail($id);
         $roles = Role::all();
         $departments = Department::all();
         return view('admin.users.edit', compact('user', 'roles', 'departments'));
@@ -131,12 +159,23 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        if ($request->filled('role') && !$request->filled('role_id')) {
+            $roleObj = Role::where('name', $request->role)->first();
+            if ($roleObj) {
+                $request->merge(['role_id' => $roleObj->id]);
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role_id' => 'required|exists:roles,id',
             'status' => 'required|in:active,inactive,suspended',
             'password' => 'nullable|min:6',
+            // Driver fields
+            'driver_license_number' => 'nullable|string|max:50',
+            'driver_phone' => 'nullable|string|max:20',
+            'driver_status' => 'nullable|in:on_duty,off_duty',
         ]);
 
         $user->name = $validated['name'];
@@ -148,7 +187,24 @@ class UserController extends Controller
         }
 
         $user->save();
-        $user->roles()->sync([$validated['role_id']]);
+        $role = Role::findOrFail($validated['role_id']);
+        $user->roles()->sync([$role->id]);
+
+        if ($role->name === 'driver') {
+            $driver = $user->ambulanceDriver;
+            $driverData = [
+                'license_number' => $request->input('driver_license_number') ?: ($request->input('license_number') ?: ($driver?->license_number ?? 'DRV-' . strtoupper(uniqid()))),
+                'contact_number' => $request->input('driver_phone') ?: ($request->input('contact_number') ?: ($driver?->contact_number ?? '+1 (555) 000-0000')),
+                'status' => $request->input('driver_status') ?: ($driver?->status ?? 'on_duty'),
+            ];
+
+            if ($driver) {
+                $driver->update($driverData);
+            } else {
+                $driverData['user_id'] = $user->id;
+                AmbulanceDriver::create($driverData);
+            }
+        }
 
         AuditService::log('UPDATE', 'users', $user->id, "Updated user account {$user->name}");
 

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Ambulance;
 use App\Models\AmbulanceDriver;
 use App\Models\AmbulanceBooking;
+use App\Models\Doctor;
 use App\Models\User;
 use App\Services\AuditService;
 
@@ -17,7 +18,7 @@ class AmbulanceAdminController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Ambulance::with(['currentDriver.user', 'activeBooking.patient']);
+        $query = Ambulance::with(['currentDriver.user', 'assignedDoctor.user', 'activeBooking.patient']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -51,7 +52,11 @@ class AmbulanceAdminController extends Controller
             ->whereDoesntHave('ambulance')
             ->get();
 
-        return view('admin.ambulances.create', compact('availableDrivers'));
+        $availableDoctors = Doctor::with(['user', 'department'])
+            ->where('is_available', true)
+            ->get();
+
+        return view('admin.ambulances.create', compact('availableDrivers', 'availableDoctors'));
     }
 
     /**
@@ -64,6 +69,7 @@ class AmbulanceAdminController extends Controller
             'model' => 'required|string|max:100',
             'type' => 'required|in:Basic,Advanced_Life_Support,Patient_Transport',
             'current_driver_id' => 'nullable|exists:ambulance_drivers,id',
+            'assigned_doctor_id' => 'nullable|exists:doctors,id',
             'status' => 'required|in:available,dispatched,in_transit,maintenance',
             'current_latitude' => 'nullable|numeric|between:-90,90',
             'current_longitude' => 'nullable|numeric|between:-180,180',
@@ -89,7 +95,7 @@ class AmbulanceAdminController extends Controller
      */
     public function edit(int $id)
     {
-        $ambulance = Ambulance::with('currentDriver.user')->findOrFail($id);
+        $ambulance = Ambulance::with(['currentDriver.user', 'assignedDoctor.user'])->findOrFail($id);
 
         $availableDrivers = AmbulanceDriver::with('user')
             ->where(function ($q) use ($ambulance) {
@@ -98,7 +104,9 @@ class AmbulanceAdminController extends Controller
             })
             ->get();
 
-        return view('admin.ambulances.edit', compact('ambulance', 'availableDrivers'));
+        $availableDoctors = Doctor::with(['user', 'department'])->get();
+
+        return view('admin.ambulances.edit', compact('ambulance', 'availableDrivers', 'availableDoctors'));
     }
 
     /**
@@ -113,6 +121,7 @@ class AmbulanceAdminController extends Controller
             'model' => 'required|string|max:100',
             'type' => 'required|in:Basic,Advanced_Life_Support,Patient_Transport',
             'current_driver_id' => 'nullable|exists:ambulance_drivers,id',
+            'assigned_doctor_id' => 'nullable|exists:doctors,id',
             'status' => 'required|in:available,dispatched,in_transit,maintenance',
             'current_latitude' => 'nullable|numeric|between:-90,90',
             'current_longitude' => 'nullable|numeric|between:-180,180',

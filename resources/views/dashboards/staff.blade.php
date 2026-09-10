@@ -14,14 +14,18 @@
                 <i class="fa-solid fa-hospital-user"></i>
             </div>
             <div>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <h3 class="text-2xl font-black">{{ Auth::user()->name }}</h3>
                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                         {{ $staff->job_title ?? 'Clinical & Administrative Staff' }}
                     </span>
+                    <!-- Sign-in Username Badge -->
+                    <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-950/80 text-emerald-300 border border-emerald-400/40 shadow-xs flex items-center gap-1.5" title="Use this username or email to sign in">
+                        <i class="fa-solid fa-at text-emerald-400 text-[11px]"></i>Sign-in Username: <strong class="text-white font-mono font-bold">{{ Auth::user()->username }}</strong>
+                    </span>
                 </div>
                 <p class="text-xs text-slate-300 mt-1">Department: <span class="text-cyan-400 font-semibold">{{ $staff->department->name ?? 'General Operations' }}</span> &bull; Extension: {{ $staff->phone ?? '+1 (555) 019-9000' }}</p>
-                <p class="text-[11px] text-slate-400 mt-0.5">Shift: Active Day Service &bull; Central Medical Grid</p>
+                <p class="text-[11px] text-slate-300 mt-0.5">Shift: Active Day Service &bull; Central Medical Grid &bull; Sign in with: <code class="text-emerald-300 font-mono font-bold">{{ Auth::user()->username }}</code></p>
             </div>
         </div>
 

@@ -82,6 +82,9 @@
                                 <span class="font-semibold text-slate-800">{{ $u->doctor->specialization }}</span> ({{ $u->doctor->department->name ?? 'General' }})
                             @elseif($u->staff)
                                 <span class="font-semibold text-slate-800">{{ $u->staff->job_title }}</span> ({{ $u->staff->department->name ?? 'Staff' }})
+                            @elseif($u->ambulanceDriver)
+                                <span class="font-semibold text-amber-800">Lic: {{ $u->ambulanceDriver->license_number }}</span>
+                                <span class="text-[11px] text-slate-500 font-mono block">{{ $u->ambulanceDriver->contact_number }}</span>
                             @elseif($u->patient)
                                 <span class="font-mono text-cyan-700 font-bold">UPI: {{ $u->patient->patient_code }}</span>
                             @else

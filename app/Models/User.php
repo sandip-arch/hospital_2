@@ -50,6 +50,32 @@ class User extends Authenticatable
     }
 
     /**
+     * Auto-generate a role-based or name-based username pattern if missing during user creation.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->username)) {
+                $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode(' ', $user->name)[0] ?? 'user'));
+                $user->username = $base . rand(100, 999);
+            }
+        });
+    }
+
+    /**
+     * Ensure username is always accessible and follows the database convention even if null.
+     */
+    public function getUsernameAttribute($value): string
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+
+        $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode(' ', $this->name ?? 'user')[0] ?? 'user'));
+        return $base . ($this->id ?? rand(100, 999));
+    }
+
+    /**
      * The roles that belong to the user.
      */
     public function roles(): BelongsToMany
@@ -149,6 +175,11 @@ class User extends Authenticatable
         return $this->hasRole('patient');
     }
 
+    public function isDriver(): bool
+    {
+        return $this->hasRole('driver');
+    }
+
     public function isReceptionist(): bool
     {
         return $this->isStaff() && $this->staff && (
@@ -217,6 +248,7 @@ class User extends Authenticatable
             'doctor' => 'bg-blue-100 text-blue-800 border-blue-200',
             'staff' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
             'patient' => 'bg-amber-100 text-amber-800 border-amber-200',
+            'driver' => 'bg-cyan-100 text-cyan-800 border-cyan-200',
             default => 'bg-gray-100 text-gray-800 border-gray-200',
         };
     }

@@ -13,7 +13,7 @@ class AmbulanceSeeder extends Seeder
 {
     public function run(): void
     {
-        $staffRole = Role::where('name', 'staff')->first();
+        $driverRole = Role::where('name', 'driver')->first() ?? Role::where('name', 'staff')->first();
 
         // 1. Create Driver Users & Driver Profiles
         $driverProfiles = [
@@ -59,8 +59,8 @@ class AmbulanceSeeder extends Seeder
                 ]
             );
 
-            if ($staffRole && !$user->roles()->where('roles.id', $staffRole->id)->exists()) {
-                $user->roles()->attach($staffRole->id);
+            if ($driverRole && !$user->roles()->where('roles.id', $driverRole->id)->exists()) {
+                $user->roles()->sync([$driverRole->id]);
             }
 
             $driver = AmbulanceDriver::updateOrCreate(

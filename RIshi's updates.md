@@ -199,16 +199,45 @@ This document tracks all changes, configurations, installations, and development
 
 ---
 
+### 16. Patient Chat Roster Restrictions & Dashboard Sign-in Username Display
+- **Requirement Implemented:**
+  1. **Restricted Patient Messaging Roster:** In the internal chat module (`/messages`), patients can strictly only see and communicate with the specific doctors they have appointed (via outpatient appointments or inpatient admissions) and front-desk receptionists. All other personnel (Superadmin, Hospital Admin, Lab Technicians, Pharmacists, Nurses, Cashiers, and un-appointed doctors) are excluded from the patient's contact list.
+  2. **Server-Side Authorization Guards:** If a patient attempts to access an unauthorized user's chat thread or dispatch a message via POST to an unauthorized user ID, the backend halts execution and returns a descriptive error message.
+  3. **Sign-in Username Visibility on All Dashboards:** Every role has a database-generated `username` (e.g. `superadmin`, `admin`, `dr_sarah`, `receptionist`, `patient_john`, `pat_xyz123`) used for signing in. This sign-in username is now prominently displayed across all role dashboards (Superadmin, Doctor, Staff, Patient), in the sidebar user card, and within the topbar profile menu.
+- **Files Modified:**
+  - `app/Http/Controllers/CommunicationController.php`: Added `getAllowedPatientContactUserIds()`, filtered contact query for patients, and added authorization validation in `messages()` and `sendMessage()`.
+  - `resources/views/communication/messages.blade.php`: Tailored contact list title, role/specialization badges, and empty-state messaging for patients.
+  - `app/Models/User.php`: Added auto-generation boot event and fallback accessor for `username`.
+  - `resources/views/dashboards/superadmin.blade.php`: Added executive identity header with `@username` badge.
+  - `resources/views/dashboards/doctor.blade.php`: Added sign-in `@username` badge in clinical profile header.
+  - `resources/views/dashboards/staff.blade.php`: Added sign-in `@username` badge in staff operations header.
+  - `resources/views/dashboards/patient.blade.php`: Added sign-in `@username` badge in patient virtual identity card.
+  - `resources/views/layouts/app.blade.php`: Displayed `@username` in sidebar header and topbar user dropdown.
+  - `tests/Feature/PatientChatAndDashboardUsernameTest.php`: Comprehensive automated feature tests.
+- **Database Schema Changed:** **NO** (Uses existing normalized `users.username` column).
+- **Test Suite Results:**
+  - Patient chat roster only includes appointed doctors & receptionists: **PASS**
+  - Superadmin, Admin, Lab Tech, Pharmacist excluded from patient chat: **PASS**
+  - Unauthorized chat navigation and POST message blocked: **PASS**
+  - Patient messaging appointed doctor and receptionist: **PASS**
+  - Dashboard sign-in username rendered across all roles: **PASS**
+
+---
+
 ## Current Status
 - **Web App Status:** Running on `http://127.0.0.1:8000`
 - **Database Status:** Connected to MySQL (`hospital` database)
 - **Bed Management & Discharge Authorization:** Fully Enforced, Functional & Tested
 - **Notification Navigation & Dropdown Filtering:** Active, Tested & Verified
+- **Patient Chat Security & Contact Isolation:** Fully Enforced & Tested
+- **Dashboard Sign-in Username Visibility:** Implemented Across All Roles
 - **Quick Demo Accounts Configured:**
-  - **Superadmin:** `superadmin@hospital.test`
-  - **Admin:** `admin@hospital.test`
-  - **Doctor (Attending):** `dr.sarah@hospital.test`
-  - **Receptionist:** `receptionist@hospital.test`
+  - **Superadmin:** `superadmin@hospital.test` (Sign-in: `@superadmin`)
+  - **Admin:** `admin@hospital.test` (Sign-in: `@admin`)
+  - **Doctor (Attending):** `dr.sarah@hospital.test` (Sign-in: `@dr_sarah`)
+  - **Receptionist:** `receptionist@hospital.test` (Sign-in: `@receptionist`)
+  - **Patient:** `patient.john@hospital.test` (Sign-in: `@patient_john`)
+
 
 
 

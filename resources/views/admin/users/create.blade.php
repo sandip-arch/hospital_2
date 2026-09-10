@@ -131,7 +131,36 @@
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">Extension Phone</label>
                         <input type="text" name="staff_phone" placeholder="+1 (555) 019-3000"
-                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Driver Specific Details -->
+            <div x-show="selectedRole === 'driver'" class="p-5 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-4" x-cloak>
+                <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-truck-medical"></i> Ambulance Driver Profile
+                </h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Commercial Driver License (CDL) *</label>
+                        <input type="text" name="driver_license_number" placeholder="e.g. DL-AMB-2026-04"
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Direct Contact Phone *</label>
+                        <input type="text" name="driver_phone" placeholder="+1 (555) 019-4400"
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Duty Status *</label>
+                        <select name="driver_status" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="on_duty">On Duty (Available for Dispatches)</option>
+                            <option value="off_duty">Off Duty</option>
+                        </select>
                     </div>
                 </div>
             </div>

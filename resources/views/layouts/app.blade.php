@@ -134,9 +134,12 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-xs font-bold text-white truncate">{{ Auth::user()->name }}</p>
+                    <p class="text-[10px] text-cyan-300 font-mono font-medium truncate flex items-center gap-0.5">
+                        <i class="fa-solid fa-at text-[9px] text-cyan-400"></i>{{ Auth::user()->username }}
+                    </p>
                     <div class="flex items-center gap-1.5 mt-0.5">
                         <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-[10px] text-cyan-300 uppercase tracking-wider font-bold truncate">{{ Auth::user()->primaryRoleDisplay() }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider font-bold truncate">{{ Auth::user()->primaryRoleDisplay() }}</span>
                     </div>
                 </div>
             </div>
@@ -188,10 +191,17 @@
                 <span>Laboratory & Diagnostics</span>
             </a>
 
-            <a href="{{ route('ambulance.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition duration-150 {{ request()->routeIs('ambulance.*') ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50' }}">
-                <i class="fa-solid fa-truck-medical w-5 text-center text-sm {{ request()->routeIs('ambulance.*') ? 'text-cyan-400' : 'text-slate-400' }}"></i>
+            <a href="{{ route('ambulance.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition duration-150 {{ request()->routeIs('ambulance.*') && !request()->routeIs('ambulance.complaints.*') ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50' }}">
+                <i class="fa-solid fa-truck-medical w-5 text-center text-sm {{ request()->routeIs('ambulance.*') && !request()->routeIs('ambulance.complaints.*') ? 'text-cyan-400' : 'text-slate-400' }}"></i>
                 <span>Ambulance Services</span>
             </a>
+
+            @if(Auth::user()->isDriver() || Auth::user()->isAdmin())
+            <a href="{{ route('ambulance.complaints.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition duration-150 {{ request()->routeIs('ambulance.complaints.*') ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50' }}">
+                <i class="fa-solid fa-triangle-exclamation w-5 text-center text-sm {{ request()->routeIs('ambulance.complaints.*') ? 'text-amber-400' : 'text-slate-400' }}"></i>
+                <span>Ambulance Complaints</span>
+            </a>
+            @endif
 
             <!-- Facilities & Inventory -->
             <div class="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Facilities & Pharmacy</div>
@@ -359,6 +369,9 @@
                          class="absolute right-0 mt-3 w-60 bg-white rounded-3xl shadow-2xl border border-slate-200/80 py-3 z-50">
                         <div class="px-5 py-2.5 border-b border-slate-100">
                             <p class="text-xs font-bold text-slate-900">{{ Auth::user()->name }}</p>
+                            <p class="text-[11px] text-cyan-600 font-mono font-semibold flex items-center gap-1 mt-0.5">
+                                <i class="fa-solid fa-at text-[10px]"></i>{{ Auth::user()->username }}
+                            </p>
                             <p class="text-[11px] text-slate-500 truncate font-mono">{{ Auth::user()->email }}</p>
                         </div>
                         <div class="py-1">

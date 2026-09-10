@@ -116,7 +116,7 @@
                         <th class="py-4 px-6">Vehicle Plate</th>
                         <th class="py-4 px-6">Model & Specs</th>
                         <th class="py-4 px-6">Equipment Type</th>
-                        <th class="py-4 px-6">Assigned Driver</th>
+                        <th class="py-4 px-6">Assigned Personnel</th>
                         <th class="py-4 px-6">Current Status</th>
                         <th class="py-4 px-6">GPS Coordinates</th>
                         <th class="py-4 px-6 text-right">Actions</th>
@@ -137,13 +137,31 @@
                                 {{ $amb->typeDisplay() }}
                             </span>
                         </td>
-                        <td class="py-4 px-6">
-                            @if($amb->currentDriver)
-                            <div class="font-bold text-slate-800">{{ $amb->currentDriver->user?->name }}</div>
-                            <div class="text-[11px] text-slate-500 font-mono">{{ $amb->currentDriver->contact_number }}</div>
-                            @else
-                            <span class="text-slate-400 italic text-[11px]">Unassigned</span>
-                            @endif
+                        <td class="py-4 px-6 space-y-1.5">
+                            <div>
+                                <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Driver</span>
+                                @if($amb->currentDriver)
+                                <div class="font-bold text-slate-800 flex items-center gap-1">
+                                    <i class="fa-solid fa-id-card text-cyan-600 text-[10px]"></i>
+                                    <span>{{ $amb->currentDriver->user?->name }}</span>
+                                </div>
+                                <div class="text-[10px] text-slate-500 font-mono">{{ $amb->currentDriver->contact_number }}</div>
+                                @else
+                                <span class="text-slate-400 italic text-[11px]">Unassigned</span>
+                                @endif
+                            </div>
+                            <div class="pt-1 border-t border-slate-100">
+                                <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Doctor</span>
+                                @if($amb->assignedDoctor)
+                                <div class="font-bold text-slate-800 flex items-center gap-1">
+                                    <i class="fa-solid fa-user-doctor text-purple-600 text-[10px]"></i>
+                                    <span>Dr. {{ $amb->assignedDoctor->user?->name }}</span>
+                                </div>
+                                <div class="text-[10px] text-purple-700 font-medium">{{ $amb->assignedDoctor->specialization }}</div>
+                                @else
+                                <span class="text-slate-400 italic text-[11px]">Unassigned</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="py-4 px-6">
                             <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold {{ $amb->statusBadge() }} shadow-sm">

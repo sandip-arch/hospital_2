@@ -20,7 +20,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\AmbulanceController;
 use App\Http\Controllers\Admin\AmbulanceAdminController;
-use App\Http\Controllers\Admin\ForgotPasswordController;
+use App\Http\Controllers\ForgotPasswordController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -160,7 +160,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/messages', [CommunicationController::class, 'messages'])->name('communication.messages');
     Route::post('/messages', [CommunicationController::class, 'sendMessage'])->name('communication.messages.send');
 
-    // 11. System Administration & RBAC (Superadmin & Admin only)
+    // 11. Ambulance Complaints & Issue Reports (Driver, Admin, Superadmin)
+    Route::get('/ambulance-complaints', [AmbulanceComplaintController::class, 'index'])->name('ambulance.complaints.index');
+    Route::post('/ambulance-complaints', [AmbulanceComplaintController::class, 'store'])->name('ambulance.complaints.store');
+    Route::put('/ambulance-complaints/{id}', [AmbulanceComplaintController::class, 'update'])->name('ambulance.complaints.update');
+    Route::delete('/ambulance-complaints/{id}', [AmbulanceComplaintController::class, 'destroy'])->name('ambulance.complaints.destroy');
+
+    // 12. System Administration & RBAC (Superadmin & Admin only)
     Route::middleware(['role:superadmin,admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
