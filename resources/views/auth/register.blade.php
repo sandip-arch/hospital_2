@@ -1,4 +1,17 @@
 @extends('layouts.auth')
+@section('content')
+
+<!-- GUARANTEED CSS INJECTION FOR PHONE DROPDOWN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.1/build/css/intlTelInput.css">
+<style>
+    /* Force the library to respect Tailwind's layout */
+    .iti { width: 100%; display: block; }
+    .iti__country-list { margin: 0; padding: 0; text-align: left; }
+    .iti__search-input { padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none; width: calc(100% - 16px); margin: 8px; }
+</style>
+
+
+<!-- ... the rest of your form continues here ... -->
 
 @section('title', 'Patient Self-Registration')
 
@@ -44,13 +57,13 @@ input[type="password"]::-ms-clear {
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">First Name *</label>
                 <input type="text" name="first_name" value="{{ old('first_name') }}" required
-                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="e.g. Johnathan">
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="e.g. Johnathan">
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Last Name *</label>
                 <input type="text" name="last_name" value="{{ old('last_name') }}" required
-                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="e.g. Doe">
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="e.g. Doe">
             </div>
         </div>
 
@@ -58,7 +71,7 @@ input[type="password"]::-ms-clear {
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Date of Birth *</label>
                 <input type="date" name="dob" value="{{ old('dob') }}" required
-                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
             </div>
 
             <div>
@@ -85,14 +98,23 @@ input[type="password"]::-ms-clear {
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Email Address *</label>
                 <input type="email" name="email" value="{{ old('email') }}" required
-                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="john@example.com">
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="john@example.com">
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
-                <input type="text" name="phone" value="{{ old('phone') }}" required
-                       class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="+1 (555) 000-0000">
-            </div>
+            <!-- Phone Number Field -->
+<div>
+    <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+    <div class="relative shadow-sm rounded-xl">
+        
+        <!-- HIDDEN FIELD: Sends the combined +919876543210 to Laravel -->
+        <input type="hidden" name="phone" id="full_phone_input" value="{{ old('phone') }}">
+
+        <!-- VISUAL INPUT: The library takes over this field -->
+        <input type="tel" id="phone_input" required
+               class="w-full py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition tracking-wide font-medium"
+               placeholder="Enter number">
+    </div>
+</div>
         </div>
 
         <div>
@@ -139,6 +161,7 @@ input[type="password"]::-ms-clear {
     </div>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.1/build/js/intlTelInput.min.js"></script>
 <script>
     function togglePasswordVisibility(inputId, iconId) {
         const passwordInput = document.getElementById(inputId);
@@ -164,5 +187,29 @@ input[type="password"]::-ms-clear {
         span.style.display = 'none';  
     }
     }
+document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.querySelector("#phone_input");
+        const hiddenInput = document.querySelector("#full_phone_input");
+        
+        // Initialize the library
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "in", // Defaults to India 🇮🇳
+            separateDialCode: true, // Puts the +91 outside the input box for a clean look
+            strictMode: true, // MAGIC FEATURE: Automatically prevents typing extra numbers based on the country's actual max length!
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.1/build/js/utils.js" // Loads global phone rules
+        });
+        
+        // Every time the user types, update the hidden field for Laravel
+        phoneInput.addEventListener('input', function() {
+            // .getNumber() automatically combines the code and number (e.g., +919876543210)
+            hiddenInput.value = iti.getNumber();
+        });
+
+        // If they select a new country, update the hidden field immediately
+        phoneInput.addEventListener('countrychange', function() {
+            hiddenInput.value = iti.getNumber();
+            phoneInput.value = ''; // Clear the field so they can type the new country's number
+        });
+    });
 </script>
 @endsection
