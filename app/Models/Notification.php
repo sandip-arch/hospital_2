@@ -63,7 +63,14 @@ class Notification extends Model
         }
 
         // 4. Billing & Invoices
-        if ($this->type === 'billing') {
+        if ($this->type === 'billing' || stripos($this->title, 'payment') !== false || stripos($this->title, 'invoice') !== false) {
+            if (preg_match('/(?:Invoice|Bill)\s*#?([A-Z0-9\-]+)/i', $this->message . ' ' . $this->title, $m)) {
+                $invoiceNum = trim($m[1], " \t\n\r\0\x0B.");
+                $inv = Invoice::where('invoice_number', $invoiceNum)->first();
+                if ($inv) {
+                    return route('billing.show', $inv->id);
+                }
+            }
             return route('billing.index');
         }
 

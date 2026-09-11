@@ -226,6 +226,11 @@ class User extends Authenticatable
         return $this->isAdmin() || $this->isReceptionist() || $this->isDoctor();
     }
 
+    public function canVerifyPayments(): bool
+    {
+        return $this->isAdmin() || $this->isReceptionist();
+    }
+
     public function canSwitchBed(?Admission $admission): bool
     {
         if (!$admission || $admission->status !== 'admitted') {

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 09, 2026 at 09:02 AM
+-- Generation Time: Sep 11, 2026 at 08:42 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -46,9 +46,16 @@ CREATE TABLE `admissions` (
 --
 
 INSERT INTO `admissions` (`id`, `patient_id`, `bed_id`, `doctor_id`, `admission_date`, `discharge_date`, `admission_reason`, `discharge_notes`, `status`, `created_at`, `updated_at`) VALUES
-(1, 3, 1, 1, '2026-09-04 09:00:00', NULL, 'Acute NSTEMI post-coronary care observation and continuous cardiac telemetry monitoring.', NULL, 'admitted', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
+(1, 3, 1, 1, '2026-09-04 09:00:00', '2026-09-10 17:45:15', 'Acute NSTEMI post-coronary care observation and continuous cardiac telemetry monitoring.', 'hjbvj', 'discharged', '2026-09-07 09:46:09', '2026-09-10 12:15:15'),
 (2, 5, 9, 4, '2026-09-06 14:30:00', NULL, 'Pre-operative preparation and pain management for right knee arthroplasty.', NULL, 'admitted', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
-(3, 6, 11, 1, '2026-09-07 15:28:00', NULL, NULL, NULL, 'admitted', '2026-09-07 09:59:09', '2026-09-07 09:59:09');
+(3, 6, 11, 1, '2026-09-07 15:28:00', NULL, NULL, NULL, 'admitted', '2026-09-07 09:59:09', '2026-09-07 09:59:09'),
+(4, 11, 18, 1, '2026-09-10 17:10:00', NULL, '[Bed Switch 2026-09-10 17:45 by Elena Rostova (Admin)]: Transferred from Bed #B4 (Room ICU-101) to Bed #B1 (Room GEN-401).\n[Bed Switch 2026-09-10 19:28 by Elena Rostova (Admin)]: Transferred from Bed #B1 (Room GEN-401) to Bed #B3 (Room GEN-401).', NULL, 'admitted', '2026-09-10 11:41:39', '2026-09-10 13:58:01'),
+(5, 11, 30, 1, '2026-09-10 17:17:00', '2026-09-10 17:19:22', NULL, 'mjduj', 'discharged', '2026-09-10 11:47:21', '2026-09-10 11:49:22'),
+(6, 11, 30, 1, '2026-09-10 19:28:00', '2026-09-10 19:36:02', NULL, ',jhgkjh', 'discharged', '2026-09-10 14:00:09', '2026-09-10 14:06:02'),
+(7, 12, 30, 1, '2026-09-11 17:13:00', '2026-09-11 17:14:09', NULL, 'hbkushaf', 'discharged', '2026-09-11 11:43:09', '2026-09-11 11:44:09'),
+(8, 12, 30, 1, '2026-09-11 17:42:00', '2026-09-11 17:43:04', NULL, 'utdr', 'discharged', '2026-09-11 12:12:15', '2026-09-11 12:13:04'),
+(9, 12, 29, 1, '2026-09-11 17:53:00', '2026-09-11 17:54:23', NULL, 'gfhfd', 'discharged', '2026-09-11 12:23:55', '2026-09-11 12:24:23'),
+(10, 12, 32, 1, '2026-09-11 18:06:00', '2026-09-11 18:06:50', NULL, 'nbvhgc', 'discharged', '2026-09-11 12:36:10', '2026-09-11 12:36:50');
 
 -- --------------------------------------------------------
 
@@ -62,6 +69,7 @@ CREATE TABLE `ambulances` (
   `model` varchar(100) NOT NULL,
   `type` enum('Basic','Advanced_Life_Support','Patient_Transport') NOT NULL,
   `current_driver_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `assigned_doctor_id` int(10) UNSIGNED DEFAULT NULL,
   `status` enum('available','dispatched','in_transit','maintenance') NOT NULL DEFAULT 'available',
   `current_latitude` decimal(10,7) DEFAULT NULL,
   `current_longitude` decimal(10,7) DEFAULT NULL,
@@ -69,6 +77,17 @@ CREATE TABLE `ambulances` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `ambulances`
+--
+
+INSERT INTO `ambulances` (`id`, `vehicle_number`, `model`, `type`, `current_driver_id`, `assigned_doctor_id`, `status`, `current_latitude`, `current_longitude`, `last_location_update`, `created_at`, `updated_at`) VALUES
+(1, 'AMB-101', 'Mercedes-Benz Sprinter 3500 Mobile ICU', 'Advanced_Life_Support', 1, NULL, 'available', 42.3375000, -71.1065000, '2026-09-09 09:44:24', '2026-09-09 09:33:47', '2026-09-09 09:44:24'),
+(2, 'AMB-102', 'Ford Transit T-350 Emergency Unit', 'Basic', 2, NULL, 'available', 42.3485000, -71.0820000, '2026-09-09 09:33:47', '2026-09-09 09:33:47', '2026-09-09 09:33:47'),
+(3, 'AMB-103', 'Dodge Ram 4500 Heavy-Duty Rescue', 'Advanced_Life_Support', 3, NULL, 'available', 42.3320000, -71.0710000, '2026-09-09 09:33:47', '2026-09-09 09:33:47', '2026-09-09 09:33:47'),
+(4, 'AMB-104', 'Chevrolet Express 3500 Patient Shuttle', 'Patient_Transport', 4, NULL, 'available', 42.3615000, -71.0920000, '2026-09-09 09:33:47', '2026-09-09 09:33:47', '2026-09-09 09:33:47'),
+(5, 'AMB-105', 'Ford E-450 Super Duty Medic', 'Basic', NULL, NULL, 'maintenance', 42.3350000, -71.1090000, '2026-09-09 09:33:47', '2026-09-09 09:33:47', '2026-09-09 09:33:47');
 
 -- --------------------------------------------------------
 
@@ -91,6 +110,36 @@ CREATE TABLE `ambulance_bookings` (
   `completed_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `ambulance_bookings`
+--
+
+INSERT INTO `ambulance_bookings` (`id`, `patient_id`, `ambulance_id`, `driver_id`, `contact_phone`, `pickup_address`, `pickup_latitude`, `pickup_longitude`, `destination_hospital_department_id`, `booking_status`, `booking_time`, `completed_at`) VALUES
+(4, NULL, 1, 1, '555-019-9999', '750 Commonwealth Ave, Boston MA 02215', 42.3480000, -71.0960000, 8, 'completed', '2026-09-09 09:43:32', '2026-09-09 09:44:24');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ambulance_complaints`
+--
+
+CREATE TABLE `ambulance_complaints` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `ambulance_id` bigint(20) UNSIGNED NOT NULL,
+  `driver_id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(150) NOT NULL,
+  `category` enum('mechanical','electrical','medical_equipment','tyres_brakes','air_conditioning','fuel_oil','cleanliness','other') NOT NULL DEFAULT 'mechanical',
+  `priority` enum('low','medium','high','critical') NOT NULL DEFAULT 'medium',
+  `description` text NOT NULL,
+  `odometer_reading` int(10) UNSIGNED DEFAULT NULL,
+  `status` enum('submitted','under_investigation','in_maintenance','resolved','closed') NOT NULL DEFAULT 'submitted',
+  `admin_notes` text DEFAULT NULL,
+  `resolved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `resolved_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 
 --
@@ -106,6 +155,16 @@ CREATE TABLE `ambulance_drivers` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `ambulance_drivers`
+--
+
+INSERT INTO `ambulance_drivers` (`id`, `user_id`, `license_number`, `contact_number`, `status`, `created_at`) VALUES
+(1, 14, 'MA-CDL-894021', '+1 (555) 301-4411', 'on_duty', '2026-09-09 09:33:44'),
+(2, 15, 'MA-CDL-712890', '+1 (555) 301-5522', 'on_duty', '2026-09-09 09:33:45'),
+(3, 16, 'MA-CDL-998314', '+1 (555) 301-6633', 'on_duty', '2026-09-09 09:33:46'),
+(4, 17, 'MA-CDL-445102', '+1 (555) 301-7744', 'on_duty', '2026-09-09 09:33:47');
+
 -- --------------------------------------------------------
 
 --
@@ -120,6 +179,20 @@ CREATE TABLE `ambulance_location_logs` (
   `longitude` decimal(10,7) NOT NULL,
   `recorded_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `ambulance_location_logs`
+--
+
+INSERT INTO `ambulance_location_logs` (`id`, `ambulance_id`, `booking_id`, `latitude`, `longitude`, `recorded_at`) VALUES
+(3, 1, 4, 42.3429000, -71.0982500, '2026-09-09 09:43:32'),
+(4, 1, 4, 42.3441750, -71.0976875, '2026-09-09 09:44:00'),
+(5, 1, 4, 42.3451313, -71.0972656, '2026-09-09 09:44:03'),
+(6, 1, 4, 42.3458485, -71.0969492, '2026-09-09 09:44:06'),
+(7, 1, 4, 42.3463864, -71.0967119, '2026-09-09 09:44:09'),
+(8, 1, 4, 42.3467898, -71.0965339, '2026-09-09 09:44:12'),
+(9, 1, 4, 42.3470924, -71.0964004, '2026-09-09 09:44:15'),
+(10, 1, 4, 42.3473193, -71.0963003, '2026-09-09 09:44:18');
 
 -- --------------------------------------------------------
 
@@ -216,7 +289,111 @@ INSERT INTO `audit_logs` (`id`, `user_id`, `action`, `table_name`, `record_id`, 
 (30, 11, 'LOGIN', 'users', 11, '127.0.0.1', 'Demo 1-Click login as cashier', '2026-09-08 09:26:29'),
 (31, 11, 'UPDATE', 'beds', 5, '127.0.0.1', 'Updated Bed #B1 status to available', '2026-09-08 09:26:43'),
 (32, 11, 'DISPENSE', 'prescriptions', 2, '127.0.0.1', 'Dispensed medication for Prescription #2', '2026-09-08 09:55:07'),
-(33, 11, 'DISPENSE', 'prescriptions', 4, '127.0.0.1', 'Dispensed medication for Prescription #4', '2026-09-08 10:05:58');
+(33, 11, 'DISPENSE', 'prescriptions', 4, '127.0.0.1', 'Dispensed medication for Prescription #4', '2026-09-08 10:05:58'),
+(34, NULL, 'BOOK_AMBULANCE', 'ambulance_bookings', 1, '127.0.0.1', 'Ambulance AMB-101 booked for pickup at 750 Commonwealth Ave, Boston MA', '2026-09-09 09:38:50'),
+(35, NULL, 'BOOK_AMBULANCE', 'ambulance_bookings', 4, '::1', 'Ambulance AMB-101 booked for pickup at 750 Commonwealth Ave, Boston MA 02215', '2026-09-09 09:43:32'),
+(36, 1, 'LOGIN', 'users', 1, '::1', 'Demo 1-Click login as superadmin', '2026-09-09 09:45:00'),
+(37, 1, 'UPDATE', 'system_settings', NULL, '::1', 'Updated hospital system configuration settings', '2026-09-09 09:50:12'),
+(38, 1, 'UPDATE', 'system_settings', NULL, '::1', 'Updated hospital system configuration settings', '2026-09-09 09:50:31'),
+(39, 1, 'UPDATE', 'system_settings', NULL, '::1', 'Updated hospital system configuration settings', '2026-09-09 09:50:49'),
+(40, 1, 'LOGOUT', 'users', 1, '::1', 'User logged out', '2026-09-09 09:51:15'),
+(41, 1, 'LOGIN', 'users', 1, '::1', 'Demo 1-Click login as superadmin', '2026-09-09 09:51:22'),
+(42, 1, 'UPDATE', 'system_settings', NULL, '::1', 'Updated hospital system configuration settings', '2026-09-09 09:52:11'),
+(43, 1, 'LOGOUT', 'users', 1, '::1', 'User logged out', '2026-09-09 09:52:55'),
+(44, 12, 'LOGIN', 'users', 12, '::1', 'Demo 1-Click login as patient', '2026-09-09 09:53:01'),
+(45, 12, 'LOGOUT', 'users', 12, '::1', 'User logged out', '2026-09-09 09:53:32'),
+(46, 1, 'LOGIN', 'users', 1, '::1', 'Demo 1-Click login as superadmin', '2026-09-09 09:53:34'),
+(47, 1, 'LOGOUT', 'users', 1, '::1', 'User logged out', '2026-09-09 09:53:38'),
+(48, 1, 'LOGIN', 'users', 1, '::1', 'Demo 1-Click login as superadmin', '2026-09-09 09:53:43'),
+(49, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-09 09:54:28'),
+(50, 1, 'UPDATE', 'system_settings', NULL, '127.0.0.1', 'Updated hospital system configuration settings', '2026-09-09 09:56:19'),
+(51, 1, 'LOGOUT', 'users', 1, '127.0.0.1', 'User logged out', '2026-09-09 09:57:52'),
+(52, 12, 'LOGIN', 'users', 12, '127.0.0.1', 'Demo 1-Click login as patient', '2026-09-09 09:57:57'),
+(53, 1, 'UPDATE', 'system_settings', NULL, '::1', 'Updated hospital system configuration settings', '2026-09-09 10:02:35'),
+(54, 12, 'LOGOUT', 'users', 12, '127.0.0.1', 'User logged out', '2026-09-09 10:34:35'),
+(55, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-09 10:34:38'),
+(56, NULL, 'REGISTER', 'users', 18, '127.0.0.1', 'New patient Rishi Shaw registered with UPI PAT-2026-0011', '2026-09-10 11:31:13'),
+(57, 18, 'ADMIT', 'admissions', 4, '127.0.0.1', 'Admitted Patient ID 11 to Bed #B4 (Room ICU-101)', '2026-09-10 11:41:39'),
+(58, 18, 'ADMIT', 'admissions', 5, '127.0.0.1', 'Admitted Patient ID 11 to Bed #B2 (Room ER-101)', '2026-09-10 11:47:21'),
+(59, 18, 'LOGOUT', 'users', 18, '127.0.0.1', 'User logged out', '2026-09-10 11:47:35'),
+(60, 2, 'LOGIN', 'users', 2, '127.0.0.1', 'Demo 1-Click login as admin', '2026-09-10 11:47:43'),
+(61, 2, 'CREATE', 'invoices', 5, '127.0.0.1', 'Generated admission invoice #INV-20260910-0001', '2026-09-10 11:49:22'),
+(62, 2, 'DISCHARGE', 'admissions', 5, '127.0.0.1', 'Discharged patient from Admission #5', '2026-09-10 11:49:22'),
+(63, 2, 'UPDATE', 'beds', 30, '127.0.0.1', 'Updated Bed #B2 status to available', '2026-09-10 11:49:27'),
+(64, 2, 'DISCHARGE', 'admissions', 1, '127.0.0.1', 'Discharged patient from Admission #1', '2026-09-10 12:15:15'),
+(65, 2, 'TRANSFER', 'admissions', 4, '127.0.0.1', 'Transferred Patient Rishi Shaw from Bed #B4 (Room ICU-101) to Bed #B1 (Room GEN-401)', '2026-09-10 12:15:46'),
+(66, 2, 'LOGOUT', 'users', 2, '127.0.0.1', 'User logged out', '2026-09-10 12:15:59'),
+(67, 18, 'LOGIN', 'users', 18, '127.0.0.1', 'User rishishaw23022006@gmail.com logged in successfully', '2026-09-10 12:16:03'),
+(68, 18, 'LOGOUT', 'users', 18, '127.0.0.1', 'User logged out', '2026-09-10 13:42:32'),
+(69, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-10 13:42:36'),
+(70, 1, 'LOGOUT', 'users', 1, '127.0.0.1', 'User logged out', '2026-09-10 13:56:57'),
+(71, 18, 'LOGIN', 'users', 18, '127.0.0.1', 'User rishishaw23022006@gmail.com logged in successfully', '2026-09-10 13:57:04'),
+(72, 18, 'LOGOUT', 'users', 18, '127.0.0.1', 'User logged out', '2026-09-10 13:57:28'),
+(73, 2, 'LOGIN', 'users', 2, '127.0.0.1', 'Demo 1-Click login as admin', '2026-09-10 13:57:31'),
+(74, 2, 'TRANSFER', 'admissions', 4, '127.0.0.1', 'Transferred Patient Rishi Shaw from Bed #B1 (Room GEN-401) to Bed #B3 (Room GEN-401)', '2026-09-10 13:58:01'),
+(75, 2, 'LOGOUT', 'users', 2, '127.0.0.1', 'User logged out', '2026-09-10 13:58:10'),
+(76, 18, 'LOGIN', 'users', 18, '127.0.0.1', 'User rishishaw23022006@gmail.com logged in successfully', '2026-09-10 13:58:13'),
+(77, 18, 'ADMIT', 'admissions', 6, '127.0.0.1', 'Admitted Patient ID 11 to Bed #B2 (Room ER-101)', '2026-09-10 14:00:09'),
+(78, 18, 'LOGOUT', 'users', 18, '127.0.0.1', 'User logged out', '2026-09-10 14:05:45'),
+(79, 2, 'LOGIN', 'users', 2, '127.0.0.1', 'Demo 1-Click login as admin', '2026-09-10 14:05:47'),
+(80, 2, 'CREATE', 'invoices', 6, '127.0.0.1', 'Generated admission invoice #INV-20260910-0002', '2026-09-10 14:06:02'),
+(81, 2, 'DISCHARGE', 'admissions', 6, '127.0.0.1', 'Discharged patient from Admission #6', '2026-09-10 14:06:02'),
+(82, 2, 'UPDATE', 'beds', 30, '127.0.0.1', 'Updated Bed #B2 status to available', '2026-09-10 14:06:07'),
+(83, 2, 'LOGOUT', 'users', 2, '127.0.0.1', 'User logged out', '2026-09-10 14:06:16'),
+(84, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-10 14:06:18'),
+(85, 1, 'LOGOUT', 'users', 1, '127.0.0.1', 'User logged out', '2026-09-10 14:06:32'),
+(86, 18, 'LOGIN', 'users', 18, '127.0.0.1', 'User rishishaw23022006@gmail.com logged in successfully', '2026-09-10 14:06:35'),
+(87, NULL, 'REGISTER', 'users', 19, '127.0.0.1', 'New patient Rishi Shaw registered with UPI PAT-2026-0012', '2026-09-11 11:42:28'),
+(88, 19, 'ADMIT', 'admissions', 7, '127.0.0.1', 'Admitted Patient ID 12 to Bed #B2 (Room ER-101)', '2026-09-11 11:43:09'),
+(89, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 11:43:23'),
+(90, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-11 11:43:26'),
+(91, 1, 'CREATE', 'invoices', 7, '127.0.0.1', 'Generated admission invoice #INV-20260911-0001', '2026-09-11 11:44:09'),
+(92, 1, 'DISCHARGE', 'admissions', 7, '127.0.0.1', 'Discharged patient from Admission #7', '2026-09-11 11:44:09'),
+(93, 1, 'UPDATE', 'beds', 30, '127.0.0.1', 'Updated Bed #B2 status to available', '2026-09-11 11:44:12'),
+(94, 1, 'LOGOUT', 'users', 1, '127.0.0.1', 'User logged out', '2026-09-11 11:44:17'),
+(95, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 11:44:23'),
+(96, 19, 'PAYMENT', 'payments', 3, '127.0.0.1', 'Processed $330 payment via cash for Invoice #INV-20260911-0001', '2026-09-11 11:44:38'),
+(97, 19, 'ADMIT', 'admissions', 8, '127.0.0.1', 'Admitted Patient ID 12 to Bed #B2 (Room ER-101)', '2026-09-11 12:12:15'),
+(98, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:12:22'),
+(99, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:12:28'),
+(100, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:12:40'),
+(101, 1, 'LOGIN', 'users', 1, '127.0.0.1', 'Demo 1-Click login as superadmin', '2026-09-11 12:12:42'),
+(102, 1, 'CREATE', 'invoices', 8, '127.0.0.1', 'Generated admission invoice #INV-20260911-0002', '2026-09-11 12:13:04'),
+(103, 1, 'DISCHARGE', 'admissions', 8, '127.0.0.1', 'Discharged patient from Admission #8', '2026-09-11 12:13:04'),
+(104, 1, 'LOGOUT', 'users', 1, '127.0.0.1', 'User logged out', '2026-09-11 12:13:09'),
+(105, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:13:12'),
+(106, 19, 'PAYMENT', 'payments', 4, '127.0.0.1', 'Patient scanned QR for Invoice #INV-20260911-0002. Status changed to checking.', '2026-09-11 12:14:14'),
+(107, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:14:23'),
+(108, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:14:28'),
+(109, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:14:37'),
+(110, 7, 'LOGIN', 'users', 7, '127.0.0.1', 'Demo 1-Click login as receptionist', '2026-09-11 12:14:42'),
+(111, 7, 'PAYMENT', 'payments', 4, '127.0.0.1', 'Payment for Invoice #INV-20260911-0002 approved by Rachel Adams (Receptionist)', '2026-09-11 12:14:53'),
+(112, 7, 'LOGOUT', 'users', 7, '127.0.0.1', 'User logged out', '2026-09-11 12:15:00'),
+(113, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:15:03'),
+(114, NULL, 'PAYMENT', 'payments', 5, '10.54.166.134', 'Patient scanned QR for Invoice #INV-2026-0003. Status changed to checking.', '2026-09-11 12:19:07'),
+(115, 19, 'ADMIT', 'admissions', 9, '127.0.0.1', 'Admitted Patient ID 12 to Bed #B1 (Room ER-101)', '2026-09-11 12:23:55'),
+(116, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:23:59'),
+(117, 7, 'LOGIN', 'users', 7, '127.0.0.1', 'Demo 1-Click login as receptionist', '2026-09-11 12:24:04'),
+(118, 7, 'CREATE', 'invoices', 9, '127.0.0.1', 'Generated admission invoice #INV-20260911-0003', '2026-09-11 12:24:23'),
+(119, 7, 'DISCHARGE', 'admissions', 9, '127.0.0.1', 'Discharged patient from Admission #9', '2026-09-11 12:24:23'),
+(120, 7, 'PAYMENT', 'payments', 6, '127.0.0.1', 'Processed $157.5 payment via cash for Invoice #INV-2026-0003', '2026-09-11 12:31:26'),
+(121, 7, 'LOGOUT', 'users', 7, '127.0.0.1', 'User logged out', '2026-09-11 12:31:30'),
+(122, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:31:34'),
+(123, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:33:47'),
+(124, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:35:59'),
+(125, 19, 'ADMIT', 'admissions', 10, '127.0.0.1', 'Admitted Patient ID 12 to Bed #B4 (Room ER-101)', '2026-09-11 12:36:10'),
+(126, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:36:15'),
+(127, 2, 'LOGIN', 'users', 2, '127.0.0.1', 'Demo 1-Click login as admin', '2026-09-11 12:36:17'),
+(128, 2, 'CREATE', 'invoices', 10, '127.0.0.1', 'Generated admission invoice #INV-20260911-0004', '2026-09-11 12:36:50'),
+(129, 2, 'DISCHARGE', 'admissions', 10, '127.0.0.1', 'Discharged patient from Admission #10', '2026-09-11 12:36:50'),
+(130, 2, 'LOGOUT', 'users', 2, '127.0.0.1', 'User logged out', '2026-09-11 12:36:55'),
+(131, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:36:58'),
+(132, 19, 'PAYMENT', 'payments', 7, '127.0.0.1', 'Patient scanned QR for Invoice #INV-20260911-0003. Status changed to checking.', '2026-09-11 12:37:22'),
+(133, 19, 'LOGOUT', 'users', 19, '127.0.0.1', 'User logged out', '2026-09-11 12:37:29'),
+(134, 7, 'LOGIN', 'users', 7, '127.0.0.1', 'Demo 1-Click login as receptionist', '2026-09-11 12:37:34'),
+(135, 7, 'PAYMENT', 'payments', 7, '127.0.0.1', 'Payment for Invoice #INV-20260911-0003 approved by Rachel Adams (Receptionist)', '2026-09-11 12:37:55'),
+(136, 7, 'LOGOUT', 'users', 7, '127.0.0.1', 'User logged out', '2026-09-11 12:38:00'),
+(137, 19, 'LOGIN', 'users', 19, '127.0.0.1', 'User rishi2@test.com logged in successfully', '2026-09-11 12:38:03');
 
 -- --------------------------------------------------------
 
@@ -238,10 +415,10 @@ CREATE TABLE `beds` (
 --
 
 INSERT INTO `beds` (`id`, `room_id`, `bed_number`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, 'B1', 'occupied', '2026-09-07 09:45:56', '2026-09-07 09:46:09'),
+(1, 1, 'B1', 'cleaning', '2026-09-07 09:45:56', '2026-09-10 12:15:15'),
 (2, 1, 'B2', 'cleaning', '2026-09-07 09:45:56', '2026-09-07 09:46:09'),
 (3, 1, 'B3', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
-(4, 1, 'B4', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
+(4, 1, 'B4', 'cleaning', '2026-09-07 09:45:56', '2026-09-10 12:15:46'),
 (5, 2, 'B1', 'available', '2026-09-07 09:45:56', '2026-09-08 09:26:43'),
 (6, 2, 'B2', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (7, 2, 'B3', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
@@ -253,9 +430,9 @@ INSERT INTO `beds` (`id`, `room_id`, `bed_number`, `status`, `created_at`, `upda
 (13, 6, 'B2', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (14, 7, 'B1', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (15, 7, 'B2', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
-(16, 8, 'B1', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
+(16, 8, 'B1', 'cleaning', '2026-09-07 09:45:56', '2026-09-10 13:58:01'),
 (17, 8, 'B2', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
-(18, 8, 'B3', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
+(18, 8, 'B3', 'occupied', '2026-09-07 09:45:56', '2026-09-10 13:58:01'),
 (19, 8, 'B4', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (20, 8, 'B5', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (21, 8, 'B6', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
@@ -265,7 +442,11 @@ INSERT INTO `beds` (`id`, `room_id`, `bed_number`, `status`, `created_at`, `upda
 (25, 9, 'B4', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (26, 9, 'B5', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (27, 9, 'B6', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
-(28, 10, 'B1', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56');
+(28, 10, 'B1', 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
+(29, 11, 'B1', 'cleaning', '2026-09-10 11:35:27', '2026-09-11 12:24:23'),
+(30, 11, 'B2', 'cleaning', '2026-09-10 11:35:27', '2026-09-11 12:13:04'),
+(31, 11, 'B3', 'available', '2026-09-10 11:35:27', '2026-09-10 11:35:27'),
+(32, 11, 'B4', 'cleaning', '2026-09-10 11:35:27', '2026-09-11 12:36:50');
 
 -- --------------------------------------------------------
 
@@ -463,7 +644,7 @@ CREATE TABLE `invoices` (
   `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `tax_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `net_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `status` enum('unpaid','partially_paid','paid','cancelled') NOT NULL DEFAULT 'unpaid',
+  `status` enum('unpaid','partially_paid','paid','cancelled','checking') DEFAULT 'unpaid',
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -476,8 +657,14 @@ CREATE TABLE `invoices` (
 INSERT INTO `invoices` (`id`, `invoice_number`, `patient_id`, `admission_id`, `appointment_id`, `invoice_date`, `due_date`, `total_amount`, `discount_amount`, `tax_amount`, `net_amount`, `status`, `notes`, `created_at`, `updated_at`) VALUES
 (1, 'INV-2026-0001', 1, NULL, 6, '2026-08-24', '2026-08-31', 225.00, 0.00, 11.25, 236.25, 'paid', 'Cardiology Consultation + Lipid Profile + 12-Lead ECG Package.', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (2, 'INV-2026-0002', 3, 1, NULL, '2026-09-06', '2026-09-14', 1575.00, 100.00, 73.75, 1548.75, 'partially_paid', 'Inpatient ICU 101 telemetry care, Troponin I assay, Digital Chest X-Ray.', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
-(3, 'INV-2026-0003', 2, NULL, 7, '2026-08-28', '2026-09-11', 150.00, 0.00, 7.50, 157.50, 'unpaid', 'Neurology Specialist Consultation - Dr. James Wilson.', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
-(4, 'INV-20260908-0001', 1, NULL, 15, '2026-09-08', '2026-09-15', 120.00, 0.00, 6.00, 126.00, 'unpaid', 'Consultation with Dr. Dr. Sarah Jenkins - Ref #APT-15', '2026-09-08 09:23:17', '2026-09-08 09:23:17');
+(3, 'INV-2026-0003', 2, NULL, 7, '2026-08-28', '2026-09-11', 150.00, 0.00, 7.50, 157.50, 'paid', 'Neurology Specialist Consultation - Dr. James Wilson.', '2026-09-07 09:46:10', '2026-09-11 12:31:26'),
+(4, 'INV-20260908-0001', 1, NULL, 15, '2026-09-08', '2026-09-15', 120.00, 0.00, 6.00, 126.00, 'unpaid', 'Consultation with Dr. Dr. Sarah Jenkins - Ref #APT-15', '2026-09-08 09:23:17', '2026-09-08 09:23:17'),
+(5, 'INV-20260910-0001', 11, 5, NULL, '2026-09-10', '2026-09-24', 320.00, 0.00, 10.00, 330.00, 'unpaid', 'Inpatient Admission #ADM-5 - Room ER-101 (Emergency)', '2026-09-10 11:49:22', '2026-09-10 11:49:22'),
+(6, 'INV-20260910-0002', 11, 6, NULL, '2026-09-10', '2026-09-24', 320.00, 0.00, 10.00, 330.00, 'unpaid', 'Inpatient Admission #ADM-6 - Room ER-101 (Emergency)', '2026-09-10 14:06:02', '2026-09-10 14:06:02'),
+(7, 'INV-20260911-0001', 12, 7, NULL, '2026-09-11', '2026-09-25', 320.00, 0.00, 10.00, 330.00, 'paid', 'Inpatient Admission #ADM-7 - Room ER-101 (Emergency)', '2026-09-11 11:44:09', '2026-09-11 11:44:38'),
+(8, 'INV-20260911-0002', 12, 8, NULL, '2026-09-11', '2026-09-25', 320.00, 0.00, 10.00, 330.00, 'paid', 'Inpatient Admission #ADM-8 - Room ER-101 (Emergency)', '2026-09-11 12:13:04', '2026-09-11 12:14:53'),
+(9, 'INV-20260911-0003', 12, 9, NULL, '2026-09-11', '2026-09-25', 320.00, 0.00, 10.00, 330.00, 'paid', 'Inpatient Admission #ADM-9 - Room ER-101 (Emergency)', '2026-09-11 12:24:23', '2026-09-11 12:37:55'),
+(10, 'INV-20260911-0004', 12, 10, NULL, '2026-09-11', '2026-09-25', 320.00, 0.00, 10.00, 330.00, 'unpaid', 'Inpatient Admission #ADM-10 - Room ER-101 (Emergency)', '2026-09-11 12:36:50', '2026-09-11 12:36:50');
 
 -- --------------------------------------------------------
 
@@ -509,7 +696,19 @@ INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_description`, `quantity`,
 (6, 2, 'Diagnostic Radiology: Digital Chest X-Ray (PA)', 1, 80.00, 80.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (7, 2, 'Attending Physician Specialist Rounding', 1, 70.00, 70.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (8, 3, 'Neurology Specialist Consultation - Dr. James Wilson', 1, 150.00, 150.00, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
-(9, 4, 'Doctor Consultation Fee - Dr. Dr. Sarah Jenkins (Senior Interventional Cardiologist)', 1, 120.00, 120.00, '2026-09-08 09:23:17', '2026-09-08 09:23:17');
+(9, 4, 'Doctor Consultation Fee - Dr. Dr. Sarah Jenkins (Senior Interventional Cardiologist)', 1, 120.00, 120.00, '2026-09-08 09:23:17', '2026-09-08 09:23:17'),
+(10, 5, 'Room Charges: Room ER-101 (Emergency) Bed #B2 [1 Day(s) @ $200.00/day]', 1, 200.00, 200.00, '2026-09-10 11:49:22', '2026-09-10 11:49:22'),
+(11, 5, 'Inpatient Attending Physician Care - Dr. Dr. Sarah Jenkins', 1, 120.00, 120.00, '2026-09-10 11:49:22', '2026-09-10 11:49:22'),
+(12, 6, 'Room Charges: Room ER-101 (Emergency) Bed #B2 [1 Day(s) @ $200.00/day]', 1, 200.00, 200.00, '2026-09-10 14:06:02', '2026-09-10 14:06:02'),
+(13, 6, 'Inpatient Attending Physician Care - Dr. Dr. Sarah Jenkins', 1, 120.00, 120.00, '2026-09-10 14:06:02', '2026-09-10 14:06:02'),
+(14, 7, 'Room Charges: Room ER-101 (Emergency) Bed #B2 [1 Day(s) @ $200.00/day]', 1, 200.00, 200.00, '2026-09-11 11:44:09', '2026-09-11 11:44:09'),
+(15, 7, 'Inpatient Attending Physician Care - Dr. Dr. Sarah Jenkins', 1, 120.00, 120.00, '2026-09-11 11:44:09', '2026-09-11 11:44:09'),
+(16, 8, 'Room Charges: Room ER-101 (Emergency) Bed #B2 [1 Day(s) @ $200.00/day]', 1, 200.00, 200.00, '2026-09-11 12:13:04', '2026-09-11 12:13:04'),
+(17, 8, 'Inpatient Attending Physician Care - Dr. Dr. Sarah Jenkins', 1, 120.00, 120.00, '2026-09-11 12:13:04', '2026-09-11 12:13:04'),
+(18, 9, 'Room Charges: Room ER-101 (Emergency) Bed #B1 [1 Day(s) @ $200.00/day]', 1, 200.00, 200.00, '2026-09-11 12:24:23', '2026-09-11 12:24:23'),
+(19, 9, 'Inpatient Attending Physician Care - Dr. Dr. Sarah Jenkins', 1, 120.00, 120.00, '2026-09-11 12:24:23', '2026-09-11 12:24:23'),
+(20, 10, 'Room Charges: Room ER-101 (Emergency) Bed #B4 [1 Day(s) @ $200.00/day]', 1, 200.00, 200.00, '2026-09-11 12:36:50', '2026-09-11 12:36:50'),
+(21, 10, 'Inpatient Attending Physician Care - Dr. Dr. Sarah Jenkins', 1, 120.00, 120.00, '2026-09-11 12:36:50', '2026-09-11 12:36:50');
 
 -- --------------------------------------------------------
 
@@ -807,7 +1006,12 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (8, '2026_09_01_000005_create_medical_records_and_pharmacy_tables', 1),
 (9, '2026_09_01_000006_create_facilities_and_admissions_tables', 1),
 (10, '2026_09_01_000007_create_billing_and_invoices_tables', 1),
-(11, '2026_09_01_000008_create_communication_and_system_tables', 1);
+(11, '2026_09_01_000008_create_communication_and_system_tables', 1),
+(12, '2026_09_01_000009_create_ambulance_system_tables', 2),
+(13, '2026_09_01_000010_add_assigned_doctor_to_ambulances_table', 2),
+(14, '2026_09_01_000011_create_ambulance_complaints_table', 2),
+(15, '2026_09_01_000012_add_emergency_to_room_types', 3),
+(16, '2026_09_01_000013_add_checking_and_rejection_to_billing', 4);
 
 -- --------------------------------------------------------
 
@@ -838,7 +1042,20 @@ INSERT INTO `notifications` (`id`, `user_id`, `title`, `message`, `type`, `is_re
 (5, 3, 'Critical Lab Result Published: Troponin I', 'Troponin I lab report for Inpatient Robert Brown (ICU-101) has been published: 1450 ng/L.', 'lab_result', 0, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (6, 12, 'Diagnostic Results Ready: Lipid Profile & ECG', 'Your diagnostic lab results for Lipid Profile Panel and 12-lead ECG are verified and ready in your portal.', 'lab_result', 0, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
 (7, 12, 'Appointment Reminder: Today at 09:30 AM', 'Your cardiology follow-up consultation with Dr. Sarah Jenkins is scheduled for today at 09:30 AM.', 'appointment', 0, '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
-(8, 1, 'New Internal Message', 'Message from Sophia Patel (Cashier & Billing): hi sir...', 'system', 0, '2026-09-07 10:00:01', '2026-09-07 10:00:01');
+(8, 1, 'New Internal Message', 'Message from Sophia Patel (Cashier & Billing): hi sir...', 'system', 0, '2026-09-07 10:00:01', '2026-09-07 10:00:01'),
+(9, 18, 'Inpatient Bed Transfer Update', 'Your hospital bed has been switched to Bed #B1 in Room GEN-401 (General Ward, General Surgery).', 'system', 1, '2026-09-10 12:15:46', '2026-09-10 12:16:09'),
+(10, 18, 'Inpatient Bed Transfer Update', 'Your hospital bed has been switched to Bed #B3 in Room GEN-401 (General Ward, General Surgery).', 'system', 1, '2026-09-10 13:58:01', '2026-09-10 13:58:18'),
+(11, 2, 'Payment Verification Needed: INV-20260911-0002', 'Patient Rishi Shaw submitted a $330 QR payment for Invoice #INV-20260911-0002. Please review and approve or decline.', 'billing', 0, '2026-09-11 12:14:14', '2026-09-11 12:14:14'),
+(12, 7, 'Payment Verification Needed: INV-20260911-0002', 'Patient Rishi Shaw submitted a $330 QR payment for Invoice #INV-20260911-0002. Please review and approve or decline.', 'billing', 1, '2026-09-11 12:14:14', '2026-09-11 12:14:49'),
+(13, 1, 'Payment Verification Needed: INV-20260911-0002', 'Patient Rishi Shaw submitted a $330 QR payment for Invoice #INV-20260911-0002. Please review and approve or decline.', 'billing', 0, '2026-09-11 12:14:14', '2026-09-11 12:14:14'),
+(14, 19, 'Payment Approved: Invoice #INV-20260911-0002', 'Your payment of $330.00 for Invoice #INV-20260911-0002 was successfully approved at Sep 11, 2026 at 05:44 PM.', 'billing', 1, '2026-09-11 12:14:53', '2026-09-11 12:15:14'),
+(15, 2, 'Payment Verification Needed: INV-2026-0003', 'Patient Emma Watson submitted a $157.5 QR payment for Invoice #INV-2026-0003. Please review and approve or decline.', 'billing', 0, '2026-09-11 12:19:07', '2026-09-11 12:19:07'),
+(16, 7, 'Payment Verification Needed: INV-2026-0003', 'Patient Emma Watson submitted a $157.5 QR payment for Invoice #INV-2026-0003. Please review and approve or decline.', 'billing', 1, '2026-09-11 12:19:07', '2026-09-11 12:24:30'),
+(17, 1, 'Payment Verification Needed: INV-2026-0003', 'Patient Emma Watson submitted a $157.5 QR payment for Invoice #INV-2026-0003. Please review and approve or decline.', 'billing', 0, '2026-09-11 12:19:07', '2026-09-11 12:19:07'),
+(18, 2, 'Payment Verification Needed: INV-20260911-0003', 'Patient Rishi Shaw submitted a $330 QR payment for Invoice #INV-20260911-0003. Please review and approve or decline.', 'billing', 0, '2026-09-11 12:37:22', '2026-09-11 12:37:22'),
+(19, 7, 'Payment Verification Needed: INV-20260911-0003', 'Patient Rishi Shaw submitted a $330 QR payment for Invoice #INV-20260911-0003. Please review and approve or decline.', 'billing', 1, '2026-09-11 12:37:22', '2026-09-11 12:37:48'),
+(20, 1, 'Payment Verification Needed: INV-20260911-0003', 'Patient Rishi Shaw submitted a $330 QR payment for Invoice #INV-20260911-0003. Please review and approve or decline.', 'billing', 0, '2026-09-11 12:37:22', '2026-09-11 12:37:22'),
+(21, 19, 'Payment Approved: Invoice #INV-20260911-0003', 'Your payment of $330.00 for Invoice #INV-20260911-0003 was successfully approved at Sep 11, 2026 at 06:07 PM.', 'billing', 1, '2026-09-11 12:37:55', '2026-09-11 12:38:10');
 
 -- --------------------------------------------------------
 
@@ -889,7 +1106,9 @@ INSERT INTO `patients` (`id`, `user_id`, `patient_code`, `first_name`, `last_nam
 (7, NULL, 'PAT-2026-0007', 'David', 'Clark', '1958-12-05', 'Male', 'O+', '+1 (555) 678-9044', 'david.clark@example.com', '71 Harvard Yard Way, Cambridge, MA 02139', 'Atrial Fibrillation on Apixaban. Hyperlipidemia on Rosuvastatin.', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
 (8, NULL, 'PAT-2026-0008', 'Charlotte', 'Lee', '2001-08-19', 'Female', 'B-', '+1 (555) 789-0155', 'charlotte.lee@example.com', '190 Tremont St, Boston, MA 02111', 'Anxiety disorder. Iron deficiency anemia managed with oral supplements.', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
 (9, NULL, 'PAT-2026-0009', 'James', 'Rodriguez', '1984-02-17', 'Male', 'A+', '+1 (555) 890-1266', 'james.rodriguez@example.com', '224 Newbury St, Boston, MA 02116', 'Lumbar disc herniation L4-L5. NSAID gastritis history.', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
-(10, NULL, 'PAT-2026-0010', 'Grace', 'Kim', '2020-10-10', 'Female', 'O+', '+1 (555) 901-2377', 'grace.kim@example.com', '45 Boylston St, Chestnut Hill, MA 02467', 'Recurrent acute otitis media. No known drug allergies.', '2026-09-07 09:46:09', '2026-09-07 09:46:09');
+(10, NULL, 'PAT-2026-0010', 'Grace', 'Kim', '2020-10-10', 'Female', 'O+', '+1 (555) 901-2377', 'grace.kim@example.com', '45 Boylston St, Chestnut Hill, MA 02467', 'Recurrent acute otitis media. No known drug allergies.', '2026-09-07 09:46:09', '2026-09-07 09:46:09'),
+(11, 18, 'PAT-2026-0011', 'Rishi', 'Shaw', '2007-02-23', 'Male', 'AB+', '+916291169468', 'rishishaw23022006@gmail.com', 'Golghar mulazor road H/No.84/18', NULL, '2026-09-10 11:31:13', '2026-09-10 11:31:13'),
+(12, 19, 'PAT-2026-0012', 'Rishi', 'Shaw', '2007-02-23', 'Male', 'AB+', '6291169468', 'rishi2@test.com', 'tdtuhdkfytfik', NULL, '2026-09-11 11:42:28', '2026-09-11 11:42:28');
 
 -- --------------------------------------------------------
 
@@ -923,7 +1142,8 @@ CREATE TABLE `payments` (
   `payment_method` enum('cash','credit_card','debit_card','insurance','upi','bank_transfer') NOT NULL,
   `transaction_reference` varchar(100) DEFAULT NULL,
   `notes` text DEFAULT NULL,
-  `status` enum('completed','failed','refunded') NOT NULL DEFAULT 'completed',
+  `rejection_reason` varchar(255) DEFAULT NULL,
+  `status` enum('completed','failed','refunded','pending','rejected') DEFAULT 'completed',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -932,9 +1152,13 @@ CREATE TABLE `payments` (
 -- Dumping data for table `payments`
 --
 
-INSERT INTO `payments` (`id`, `payment_number`, `invoice_id`, `payment_date`, `amount_paid`, `payment_method`, `transaction_reference`, `notes`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'PAY-2026-0001', 1, '2026-08-24 12:15:00', 236.25, 'credit_card', 'TXN-VISA-904812', 'Settled in full via contactless Visa card at front desk.', 'completed', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
-(2, 'PAY-2026-0002', 2, '2026-09-06 16:00:00', 1000.00, 'insurance', 'INS-BLUECROSS-CLM-88421', 'BlueCross Primary Insurance pre-authorized advance payment.', 'completed', '2026-09-07 09:46:10', '2026-09-07 09:46:10');
+INSERT INTO `payments` (`id`, `payment_number`, `invoice_id`, `payment_date`, `amount_paid`, `payment_method`, `transaction_reference`, `notes`, `rejection_reason`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'PAY-2026-0001', 1, '2026-08-24 12:15:00', 236.25, 'credit_card', 'TXN-VISA-904812', 'Settled in full via contactless Visa card at front desk.', NULL, 'completed', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
+(2, 'PAY-2026-0002', 2, '2026-09-06 16:00:00', 1000.00, 'insurance', 'INS-BLUECROSS-CLM-88421', 'BlueCross Primary Insurance pre-authorized advance payment.', NULL, 'completed', '2026-09-07 09:46:10', '2026-09-07 09:46:10'),
+(3, 'PAY-20260911-0001', 7, '2026-09-11 17:14:38', 330.00, 'cash', 'AUTO-6aa436fecef9d', NULL, NULL, 'completed', '2026-09-11 11:44:38', '2026-09-11 11:44:38'),
+(4, 'PAY-20260911-0002', 8, '2026-09-11 17:44:14', 330.00, 'upi', 'QR-SCAN-E14069', 'Contactless demo QR payment submitted by patient. Verification required. [Approved by Rachel Adams (Receptionist) on 2026-09-11 17:44]', NULL, 'completed', '2026-09-11 12:14:14', '2026-09-11 12:14:53'),
+(6, 'PAY-20260911-0003', 3, '2026-09-11 18:01:26', 157.50, 'cash', 'AUTO-6aa441f6a3ee5', NULL, NULL, 'completed', '2026-09-11 12:31:26', '2026-09-11 12:31:26'),
+(7, 'PAY-20260911-0004', 9, '2026-09-11 18:07:22', 330.00, 'upi', 'QR-SCAN-ADD5FE', 'Contactless demo QR payment submitted by patient. Verification required. [Approved by Rachel Adams (Receptionist) on 2026-09-11 18:07]', NULL, 'completed', '2026-09-11 12:37:22', '2026-09-11 12:37:55');
 
 -- --------------------------------------------------------
 
@@ -1122,7 +1346,8 @@ INSERT INTO `roles` (`id`, `name`, `display_name`, `description`, `created_at`, 
 (3, 'doctor', 'Doctor / Physician', 'Clinical diagnosis, prescribing, and patient care', '2026-09-07 09:45:55', '2026-09-07 09:45:55'),
 (4, 'staff', 'Hospital Staff', 'Support staff (Reception, Nursing, Lab, Pharmacy, Billing)', '2026-09-07 09:45:55', '2026-09-07 09:45:55'),
 (5, 'patient', 'Patient', 'Patient portal user for appointments, records, and billing', '2026-09-07 09:45:55', '2026-09-07 09:45:55'),
-(6, 'user', 'General / Guest User', 'Unverified or registered visitor on public portal', '2026-09-07 09:45:55', '2026-09-07 09:45:55');
+(6, 'user', 'General / Guest User', 'Unverified or registered visitor on public portal', '2026-09-07 09:45:55', '2026-09-07 09:45:55'),
+(7, 'driver', 'Ambulance Driver', 'Emergency medical response and patient transport driver', '2026-09-10 11:18:38', '2026-09-10 11:18:38');
 
 -- --------------------------------------------------------
 
@@ -1152,7 +1377,13 @@ INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
 (10, 4),
 (11, 4),
 (12, 5),
-(13, 5);
+(13, 5),
+(14, 4),
+(15, 4),
+(16, 4),
+(17, 4),
+(18, 5),
+(19, 5);
 
 -- --------------------------------------------------------
 
@@ -1163,7 +1394,7 @@ INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
 CREATE TABLE `rooms` (
   `id` int(10) UNSIGNED NOT NULL,
   `room_number` varchar(20) NOT NULL,
-  `room_type` enum('ICU','Private','Semi-Private','General Ward','Operating Theater') NOT NULL,
+  `room_type` enum('Emergency','ICU','Private','Semi-Private','General Ward','Operating Theater') NOT NULL,
   `department_id` int(10) UNSIGNED NOT NULL,
   `daily_rate` decimal(10,2) NOT NULL,
   `status` enum('available','full','maintenance') NOT NULL DEFAULT 'available',
@@ -1185,7 +1416,8 @@ INSERT INTO `rooms` (`id`, `room_number`, `room_type`, `department_id`, `daily_r
 (7, 'SEMI-302', 'Semi-Private', 6, 160.00, 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (8, 'GEN-401', 'General Ward', 6, 80.00, 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
 (9, 'GEN-402', 'General Ward', 4, 80.00, 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
-(10, 'OT-01', 'Operating Theater', 6, 600.00, 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56');
+(10, 'OT-01', 'Operating Theater', 6, 600.00, 'available', '2026-09-07 09:45:56', '2026-09-07 09:45:56'),
+(11, 'ER-101', 'Emergency', 8, 200.00, 'available', '2026-09-10 11:35:27', '2026-09-10 11:35:27');
 
 -- --------------------------------------------------------
 
@@ -1207,9 +1439,11 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('cEbRDrYGEDpaGtb9aTDYziSC2paxJrgtLxTKrT5r', 11, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiT293NE1uR2dYdTlRZk5LOXRrTUJITHFpbjlaVHlMYk9jR0tXVG95NiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJuZXciO2E6MDp7fXM6Mzoib2xkIjthOjE6e2k6MDtzOjc6InN1Y2Nlc3MiO319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbi9kZW1vL2Nhc2hpZXIiO3M6NToicm91dGUiO3M6MTA6ImxvZ2luLmRlbW8iO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxMTtzOjc6InN1Y2Nlc3MiO3M6NTU6IkxvZ2dlZCBpbiBhcyBTb3BoaWEgUGF0ZWwgKENhc2hpZXIgJiBCaWxsaW5nKSAoY2FzaGllcikiO30=', 1788879370),
-('EYifQuJP1QNhJ7xyfgy72Lk7mM2NLN2Ar4VBtXSM', 11, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoibkxlelJjQ25QdkRNYkVOYmhtTGt5VjRwWnlCVDd2TGwzUkN5NHpRVCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo0NToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL3BoYXJtYWN5L2Rpc3BlbnNlLXF1ZXVlIjt9czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDQ6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9mYWNpbGl0aWVzL2JlZC10cmFja2VyIjtzOjU6InJvdXRlIjtzOjIyOiJmYWNpbGl0aWVzLmJlZC10cmFja2VyIjt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTE7fQ==', 1788882799),
-('mRmPxEKOmyp56DVdUKfXoTpWyoZgzRXrLaPAK1NH', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9168', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoibWp2dlRQZGpBVDBFeVA3dzRKelBLblRhanA4S0FSUzM5YmlXalMxNCI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1788881612);
+('7WEmEGmGo28NekdgHYNEU9IEQ6J4jczQlpnWThKe', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiSWRlU0lDeUN2T2Zrdm1ZTndmWEgwdUFhRkpiV1dUSks0MmRETnZEUiI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1789146660),
+('iCmlfvuuAlRUWVjMOJNjQ0D5luMvqtKScahd8Jk7', 19, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoickdZUWthbHJMYkNmcFVxakFHQU5xMG5XQXBYZmNmb1JVQW5vZjYzMSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJuZXciO2E6MDp7fXM6Mzoib2xkIjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6MzE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9iaWxsaW5nLzkiO3M6NToicm91dGUiO3M6MTI6ImJpbGxpbmcuc2hvdyI7fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE5O30=', 1789150091),
+('lhmYJOyJtwpAQVvrHBkY2GQdGWz9I5uB5XKhkGM1', NULL, '10.54.166.134', 'curl/8.9.1', 'YToyOntzOjY6Il90b2tlbiI7czo0MDoiRkRzcURBeThMWHE1cEFsYkJsV0FnWnJsUHJNdWFCMW5mNlhUNlZTRCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1789148947),
+('MXK4tzkMNkbRZADTwr8jauCEOB7siU7gSW4nj6qY', NULL, '127.0.0.1', 'curl/8.9.1', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiNjRENlRiVTA0ZTUwZTdJZHRxaUdDWXRIWVFmZmxld21mOGs3dEVybSI7czo0OiJpbmZvIjtzOjI0OiJJbnZvaWNlIGlzIGFscmVhZHkgcGFpZC4iO3M6NjoiX2ZsYXNoIjthOjI6e3M6MzoibmV3IjthOjA6e31zOjM6Im9sZCI7YToxOntpOjA7czo0OiJpbmZvIjt9fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM5OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYmlsbGluZy84L3FyLXNjYW4iO3M6NToicm91dGUiO3M6MTU6ImJpbGxpbmcucXItc2NhbiI7fX0=', 1789148907),
+('qv92APSi9pFyQb6o6Uo8V3NlupxrhOkU1FcOUE5k', NULL, '127.0.0.1', 'curl/8.9.1', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiQlhjeVVjSFY5ZENqMXlzMzdleDMxR0N4NkVHak1oSnphN3ZPSVJ5MiI7czo0OiJpbmZvIjtzOjI0OiJJbnZvaWNlIGlzIGFscmVhZHkgcGFpZC4iO3M6NjoiX2ZsYXNoIjthOjI6e3M6MzoibmV3IjthOjA6e31zOjM6Im9sZCI7YToxOntpOjA7czo0OiJpbmZvIjt9fX0=', 1789148912);
 
 -- --------------------------------------------------------
 
@@ -1259,7 +1493,7 @@ CREATE TABLE `system_settings` (
 --
 
 INSERT INTO `system_settings` (`id`, `setting_key`, `setting_value`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'hospital_name', 'Apex Horizon International Center', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
+(1, 'hospital_name', 'hello medical', NULL, '2026-09-07 09:46:10', '2026-09-09 10:02:34'),
 (2, 'hospital_phone', '+1 (800) 555-APEX / +1 (555) 019-9000', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
 (3, 'hospital_email', 'contact@apexmedical.test', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
 (4, 'hospital_address', '500 Health Sciences Blvd, Medical District, Boston MA 02115', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
@@ -1304,7 +1538,13 @@ INSERT INTO `users` (`id`, `username`, `name`, `email`, `email_verified_at`, `pa
 (10, 'labtech', 'David Miller (Lab Tech)', 'labtech@hospital.test', NULL, '$2y$12$lceD8z7VLL2wZHqQEnsi4O7SOBQsvc6FjIjXeGr4k/D0twyNvt/96', 'active', NULL, '2026-09-07 09:46:06', '2026-09-07 09:46:06'),
 (11, 'cashier', 'Sophia Patel (Cashier & Billing)', 'cashier@hospital.test', NULL, '$2y$12$kza4Afdht443m8ewhAhrr.nFacVX3msUHulGmKTGFLArQmsNJek4.', 'active', NULL, '2026-09-07 09:46:07', '2026-09-07 09:46:07'),
 (12, 'patient_john', 'Johnathan Doe', 'patient.john@hospital.test', NULL, '$2y$12$qd8nOz0jNNbsdCPvkxECzOT9Fkgezy2bjN9UlPyxyBiad6nP6iBk.', 'active', NULL, '2026-09-07 09:46:07', '2026-09-07 09:46:07'),
-(13, 'patient_emma', 'Emma Watson', 'patient.emma@hospital.test', NULL, '$2y$12$iTirtHGkU78r5xGYVTMpNu8a8dLyiIs140SzCtKIR1Yn2Sot3WbIa', 'active', NULL, '2026-09-07 09:46:08', '2026-09-07 09:46:08');
+(13, 'patient_emma', 'Emma Watson', 'patient.emma@hospital.test', NULL, '$2y$12$iTirtHGkU78r5xGYVTMpNu8a8dLyiIs140SzCtKIR1Yn2Sot3WbIa', 'active', NULL, '2026-09-07 09:46:08', '2026-09-07 09:46:08'),
+(14, 'driver_marcus', 'Marcus Vance', 'driver1@hospital.test', NULL, '$2y$12$7Dw7okPXOevsZHBELpeJ8Oja9.2SgOI6ks2At95d.dp3ufMbRYZ/S', 'active', NULL, '2026-09-09 09:33:44', '2026-09-09 09:33:44'),
+(15, 'driver_carlos', 'Carlos Mendez', 'driver2@hospital.test', NULL, '$2y$12$Yt6yj/VKxJ6oSomq4fEGB.ax7O7GLl.Q8OKd3oc1e..JwHCLEiaUq', 'active', NULL, '2026-09-09 09:33:45', '2026-09-09 09:33:45'),
+(16, 'driver_sarah', 'Sarah O\'Connor', 'driver3@hospital.test', NULL, '$2y$12$q1v26rQeBqtYfa1e75uDuuGs41GWm/HBbHKjBpkAxwjaYhDloj8WW', 'active', NULL, '2026-09-09 09:33:45', '2026-09-09 09:33:45'),
+(17, 'driver_ahmed', 'Ahmed Khan', 'driver4@hospital.test', NULL, '$2y$12$tRyceH9RbNWFfU75RLhKQuLDGVCgNtnaY4d/Z17L0xJIjP0ebIdA6', 'active', NULL, '2026-09-09 09:33:46', '2026-09-09 09:33:46'),
+(18, 'pat_rishi871', 'Rishi Shaw', 'rishishaw23022006@gmail.com', NULL, '$2y$12$ujiSe1wZF4b/LVLzVTMZoeNoo.WUbXEZjsa3qcXv7sf3vXk2xLyuG', 'active', NULL, '2026-09-10 11:31:13', '2026-09-10 11:31:13'),
+(19, 'pat_rishi571', 'Rishi Shaw', 'rishi2@test.com', NULL, '$2y$12$gcWVXINnmeZVjITLm1cAYe4Tq2/8Q2QGtUQsmcomLxSR7xmPj9qE.', 'active', NULL, '2026-09-11 11:42:28', '2026-09-11 11:42:28');
 
 --
 -- Indexes for dumped tables
@@ -1327,7 +1567,8 @@ ALTER TABLE `ambulances`
   ADD UNIQUE KEY `vehicle_number` (`vehicle_number`),
   ADD KEY `idx_ambulance_status` (`status`),
   ADD KEY `idx_ambulance_coords` (`current_latitude`,`current_longitude`),
-  ADD KEY `fk_ambulances_current_driver` (`current_driver_id`);
+  ADD KEY `fk_ambulances_current_driver` (`current_driver_id`),
+  ADD KEY `ambulances_assigned_doctor_id_foreign` (`assigned_doctor_id`);
 
 --
 -- Indexes for table `ambulance_bookings`
@@ -1339,6 +1580,15 @@ ALTER TABLE `ambulance_bookings`
   ADD KEY `fk_ambulance_bookings_ambulance` (`ambulance_id`),
   ADD KEY `fk_ambulance_bookings_driver` (`driver_id`),
   ADD KEY `fk_ambulance_bookings_department` (`destination_hospital_department_id`);
+
+--
+-- Indexes for table `ambulance_complaints`
+--
+ALTER TABLE `ambulance_complaints`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `ambulance_complaints_ambulance_id_foreign` (`ambulance_id`),
+  ADD KEY `ambulance_complaints_driver_id_foreign` (`driver_id`),
+  ADD KEY `ambulance_complaints_resolved_by_foreign` (`resolved_by`);
 
 --
 -- Indexes for table `ambulance_drivers`
@@ -1651,31 +1901,37 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `admissions`
 --
 ALTER TABLE `admissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `ambulances`
 --
 ALTER TABLE `ambulances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `ambulance_bookings`
 --
 ALTER TABLE `ambulance_bookings`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `ambulance_complaints`
+--
+ALTER TABLE `ambulance_complaints`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `ambulance_drivers`
 --
 ALTER TABLE `ambulance_drivers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `ambulance_location_logs`
 --
 ALTER TABLE `ambulance_location_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `appointments`
@@ -1687,13 +1943,13 @@ ALTER TABLE `appointments`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=138;
 
 --
 -- AUTO_INCREMENT for table `beds`
 --
 ALTER TABLE `beds`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `departments`
@@ -1729,13 +1985,13 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `invoice_items`
 --
 ALTER TABLE `invoice_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `jobs`
@@ -1789,19 +2045,19 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `patient_documents`
@@ -1813,7 +2069,7 @@ ALTER TABLE `patient_documents`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -1837,13 +2093,13 @@ ALTER TABLE `prescription_items`
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `rooms`
 --
 ALTER TABLE `rooms`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `staff`
@@ -1861,7 +2117,7 @@ ALTER TABLE `system_settings`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- Constraints for dumped tables
@@ -1879,6 +2135,7 @@ ALTER TABLE `admissions`
 -- Constraints for table `ambulances`
 --
 ALTER TABLE `ambulances`
+  ADD CONSTRAINT `ambulances_assigned_doctor_id_foreign` FOREIGN KEY (`assigned_doctor_id`) REFERENCES `doctors` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_ambulances_current_driver` FOREIGN KEY (`current_driver_id`) REFERENCES `ambulance_drivers` (`id`) ON DELETE SET NULL;
 
 --
@@ -1889,6 +2146,14 @@ ALTER TABLE `ambulance_bookings`
   ADD CONSTRAINT `fk_ambulance_bookings_department` FOREIGN KEY (`destination_hospital_department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_ambulance_bookings_driver` FOREIGN KEY (`driver_id`) REFERENCES `ambulance_drivers` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_ambulance_bookings_patient` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `ambulance_complaints`
+--
+ALTER TABLE `ambulance_complaints`
+  ADD CONSTRAINT `ambulance_complaints_ambulance_id_foreign` FOREIGN KEY (`ambulance_id`) REFERENCES `ambulances` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ambulance_complaints_driver_id_foreign` FOREIGN KEY (`driver_id`) REFERENCES `ambulance_drivers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ambulance_complaints_resolved_by_foreign` FOREIGN KEY (`resolved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `ambulance_drivers`

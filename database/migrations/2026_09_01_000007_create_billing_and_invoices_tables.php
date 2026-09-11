@@ -24,7 +24,7 @@ return new class extends Migration
             $table->decimal('discount_amount', 10, 2)->default(0.00);
             $table->decimal('tax_amount', 10, 2)->default(0.00);
             $table->decimal('net_amount', 10, 2)->default(0.00);
-            $table->enum('status', ['unpaid', 'partially_paid', 'paid', 'cancelled'])->default('unpaid');
+            $table->enum('status', ['unpaid', 'partially_paid', 'paid', 'cancelled', 'checking'])->default('unpaid');
             $table->text('notes')->nullable();
             $table->timestamps();
         });
@@ -50,7 +50,8 @@ return new class extends Migration
             $table->enum('payment_method', ['cash', 'credit_card', 'debit_card', 'insurance', 'upi', 'bank_transfer']);
             $table->string('transaction_reference', 100)->nullable();
             $table->text('notes')->nullable();
-            $table->enum('status', ['completed', 'failed', 'refunded'])->default('completed');
+            $table->enum('status', ['completed', 'failed', 'refunded', 'pending', 'rejected'])->default('completed');
+            $table->string('rejection_reason', 255)->nullable();
             $table->timestamps();
         });
     }

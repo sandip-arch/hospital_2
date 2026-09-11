@@ -222,11 +222,42 @@ This document tracks all changes, configurations, installations, and development
   - Patient messaging appointed doctor and receptionist: **PASS**
   - Dashboard sign-in username rendered across all roles: **PASS**
 
+### 17. Contactless QR Payment Verification & Receptionist Approval Workflow
+- **Requirement Implemented:**
+  1. **Dynamic Mobile QR Payment:** When an unpaid invoice is viewed by a patient, clicking "Pay Online (QR)" displays a dynamic QR code encoding the host's reachable Wi-Fi IP. Scanning it via smartphone camera opens a mobile confirmation receipt and immediately transitions the invoice to `'checking'` status.
+  2. **Auto-Disappearing Desktop Modal:** Alpine.js polls `/billing/{id}/status` every 2 seconds. The millisecond the phone scans the QR code, the modal automatically closes and the invoice flips to the amber `Checking` state. Includes a 1-click desktop simulation button.
+  3. **Receptionist / Admin Approval & Decline Controls:** When an invoice is in the `checking` state, Receptionists and Admins see a verification banner with **[Approve Payment]** and **[Decline]** buttons.
+     - **Approve:** Marks the payment as `completed`, invoice as `paid`, and sends an approval notification to the patient with timestamp and service details.
+     - **Decline:** Prompts staff for an explanation, marks payment as `rejected` with `rejection_reason`, reverts invoice to `unpaid`, and notifies the patient with the reason and retry link.
+  4. **Counter Settlement Notification:** When staff record an in-person payment via "Collect at Counter", an instant notification is sent to the patient detailing the offline counter payment.
+  5. **Role-Based UI Isolation:** "Pay Online (QR)" and the QR modal are strictly rendered **only for patients**. Superadmins, Admins, and Receptionists only see counter collection and verification controls.
+  6. **Interactive Notification Redirection:** Clicking billing notifications in the dropdown redirects directly to `/billing/{id}`.
+- **Files Modified/Created:**
+  - `database/migrations/2026_09_01_000013_add_checking_and_rejection_to_billing.php`: Added `'checking'` to `invoices.status`, and `'pending'` / `'rejected'` + `rejection_reason` to `payments`.
+  - `app/Models/Invoice.php`: Added `isChecking()`, `latestPendingPayment()`, `latestRejectedPayment()`, and updated badge formatting.
+  - `app/Models/Payment.php`: Added `rejection_reason` to fillable and status badge accessor.
+  - `app/Models/User.php`: Added `canVerifyPayments()`.
+  - `app/Models/Notification.php`: Enhanced `target_url` to link directly to invoices.
+  - `app/Http/Controllers/BillingController.php`: Added `qrScanPayment()`, `checkStatus()`, `verifyPayment()`, and counter notification to `collectPayment()`.
+  - `routes/web.php`: Added public mobile `billing.qr-scan`, status polling, and verification routes.
+  - `resources/views/billing/show.blade.php`: Added QR modal, live polling, staff verification banner, and decline reason modal.
+  - `resources/views/billing/qr-scanned-mobile.blade.php`: Mobile confirmation page for camera scans.
+  - `tests/Feature/QrPaymentVerificationTest.php`: Comprehensive automated feature tests.
+- **Database Schema Changed:** **YES** (Non-breaking 3NF-compliant migration adding status values and rejection note column).
+- **Test Suite Results:**
+  - Patient QR scan -> checking: **PASS**
+  - Receptionist decline with reason -> unpaid + patient notification: **PASS**
+  - Receptionist approve -> paid + patient notification: **PASS**
+  - Patient forbidden from self-approval (403): **PASS**
+  - Offline counter collection -> patient notification: **PASS**
+  - Mobile Wi-Fi camera scan end-to-end verification: **PASS**
+
 ---
 
 ## Current Status
-- **Web App Status:** Running on `http://127.0.0.1:8000`
+- **Web App Status:** Stopped (Port 8000 released)
 - **Database Status:** Connected to MySQL (`hospital` database)
+- **QR Payment Verification & Approval:** Fully Functional, Live Tested & Verified
 - **Bed Management & Discharge Authorization:** Fully Enforced, Functional & Tested
 - **Notification Navigation & Dropdown Filtering:** Active, Tested & Verified
 - **Patient Chat Security & Contact Isolation:** Fully Enforced & Tested

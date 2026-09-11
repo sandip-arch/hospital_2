@@ -119,6 +119,7 @@
                 <select name="status" onchange="this.form.submit()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-bold">
                     <option value="">All Payment Statuses</option>
                     <option value="unpaid" {{ request('status') == 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                    <option value="checking" {{ request('status') == 'checking' ? 'selected' : '' }}>Under Verification (Checking)</option>
                     <option value="partially_paid" {{ request('status') == 'partially_paid' ? 'selected' : '' }}>Partially Paid</option>
                     <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Fully Settled / Paid</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>

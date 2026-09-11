@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\AmbulanceController;
 use App\Http\Controllers\Admin\AmbulanceAdminController;
+use App\Http\Controllers\AmbulanceComplaintController;
 use App\Http\Controllers\ForgotPasswordController; 
 
 /*
@@ -44,6 +45,9 @@ Route::get('/ambulance/api/locations', [AmbulanceController::class, 'apiLocation
 Route::get('/ambulance/api/track/{id}', [AmbulanceController::class, 'apiTrack'])->name('ambulance.api.track');
 Route::post('/ambulance/api/simulate-step/{id}', [AmbulanceController::class, 'apiSimulateStep'])->name('ambulance.api.simulate');
 Route::post('/ambulance/api/reposition-near-device', [AmbulanceController::class, 'apiRepositionNearDevice'])->name('ambulance.api.reposition');
+
+// Public Mobile QR Scanner Route (Allows direct camera scan from patient phone)
+Route::match(['GET', 'POST'], '/billing/{id}/qr-scan', [BillingController::class, 'qrScanPayment'])->name('billing.qr-scan');
 
 /*
 |--------------------------------------------------------------------------
@@ -151,6 +155,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/billing/{id}', [BillingController::class, 'show'])->name('billing.show');
     Route::post('/billing/{id}/pay', [BillingController::class, 'collectPayment'])->name('billing.pay');
+    Route::get('/billing/{id}/status', [BillingController::class, 'checkStatus'])->name('billing.status');
+    Route::post('/billing/{id}/verify', [BillingController::class, 'verifyPayment'])->name('billing.verify');
     Route::get('/billing/{id}/print', [BillingController::class, 'printInvoice'])->name('billing.print');
 
     // 10. Communication & Notifications

@@ -80,17 +80,33 @@ class Invoice extends Model
             $this->status = 'paid';
         } elseif ($this->paid_amount > 0) {
             $this->status = 'partially_paid';
-        } else {
+        } elseif ($this->status !== 'checking') {
             $this->status = 'unpaid';
         }
 
         $this->save();
     }
 
+    public function isChecking(): bool
+    {
+        return $this->status === 'checking';
+    }
+
+    public function latestPendingPayment(): ?Payment
+    {
+        return $this->payments()->where('status', 'pending')->latest()->first();
+    }
+
+    public function latestRejectedPayment(): ?Payment
+    {
+        return $this->payments()->where('status', 'rejected')->latest()->first();
+    }
+
     public function getStatusBadgeAttribute(): string
     {
         return match ($this->status) {
             'paid' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            'checking' => 'bg-amber-100 text-amber-800 border-amber-300 ring-2 ring-amber-400/50',
             'partially_paid' => 'bg-amber-100 text-amber-800 border-amber-200',
             'unpaid' => 'bg-rose-100 text-rose-800 border-rose-200',
             'cancelled' => 'bg-gray-100 text-gray-800 border-gray-200',
