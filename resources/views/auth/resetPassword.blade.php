@@ -1,6 +1,12 @@
 @extends('layouts.auth')
 
 @section('title', 'Create New Password')
+<style>
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+        display: none;
+    }
+</style>
 
 @section('content')
 <div class="max-w-md mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-800/40 p-8 lg:p-10">
