@@ -101,6 +101,7 @@
             .border { border-color: #cbd5e1 !important; }
         }
     </style>
+    @stack('styles')
 </head>
 <body class="h-full font-sans antialiased text-slate-800 flex" x-data="{ sidebarOpen: false }">
 
