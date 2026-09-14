@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Apex Horizon International Medical Center')
-
+<link rel="icon" type="image/png" href="{{ asset('image.png') }}">
 @section('content')
 
 <!-- Hero Section -->
