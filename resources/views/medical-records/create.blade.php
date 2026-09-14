@@ -20,6 +20,15 @@
 
             @if($selectedAppointmentId)
             <input type="hidden" name="appointment_id" value="{{ $selectedAppointmentId }}">
+            <div class="p-3.5 bg-cyan-50/80 border border-cyan-200/80 rounded-2xl flex items-center justify-between text-xs text-cyan-900">
+                <span class="flex items-center gap-2 font-semibold">
+                    <i class="fa-solid fa-link text-cyan-600"></i>
+                    Linked to Consultation Encounter: <strong>#APT-{{ $selectedAppointmentId }}</strong>
+                </span>
+                <span class="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 border border-emerald-200">
+                    <i class="fa-solid fa-check"></i> Auto-marks consultation as Completed on save
+                </span>
+            </div>
             @endif
 
             <!-- Patient & Doctor -->

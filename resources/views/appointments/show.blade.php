@@ -27,13 +27,27 @@
                 <p class="text-xs text-slate-500 mt-1">Booked on {{ $appointment->created_at->format('M d, Y - h:i A') }}</p>
             </div>
 
-            <!-- Start Consultation Action -->
-            @if($appointment->status !== 'completed' && (Auth::user()->isDoctor() || Auth::user()->isAdmin()))
-            <a href="{{ route('medical-records.create', ['patient_id' => $appointment->patient_id, 'appointment_id' => $appointment->id, 'doctor_id' => $appointment->doctor_id]) }}"
-               class="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
-                <i class="fa-solid fa-stethoscope"></i> Start Consultation
-            </a>
-            @endif
+            <!-- Consultation Actions -->
+            <div class="flex items-center gap-2 flex-wrap">
+                @if($appointment->status !== 'completed' && (Auth::user()->isDoctor() || Auth::user()->isAdmin() || Auth::user()->isStaff()))
+                <a href="{{ route('medical-records.create', ['patient_id' => $appointment->patient_id, 'appointment_id' => $appointment->id, 'doctor_id' => $appointment->doctor_id]) }}"
+                   class="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+                    <i class="fa-solid fa-stethoscope"></i> Start Consultation
+                </a>
+
+                <form action="{{ route('appointments.updateStatus', $appointment->id) }}" method="POST" onsubmit="return confirm('Mark consultation #APT-{{ $appointment->id }} as completed?');" class="inline">
+                    @csrf
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i> Mark Completed
+                    </button>
+                </form>
+                @elseif($appointment->status === 'completed')
+                <span class="px-3.5 py-2 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-1.5">
+                    <i class="fa-solid fa-check-double"></i> Consultation Completed
+                </span>
+                @endif
+            </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">

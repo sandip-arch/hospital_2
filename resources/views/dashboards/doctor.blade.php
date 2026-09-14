@@ -134,9 +134,18 @@
 
                         @if($apt->status !== 'completed')
                         <a href="{{ route('medical-records.create', ['patient_id' => $apt->patient_id, 'appointment_id' => $apt->id, 'doctor_id' => $doctor->id]) }}" 
-                           class="px-3.5 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+                           class="px-3.5 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1.5"
+                           title="Open EMR consultation encounter form">
                             <i class="fa-solid fa-stethoscope"></i> Start Consultation
                         </a>
+
+                        <form action="{{ route('appointments.updateStatus', $apt->id) }}" method="POST" onsubmit="return confirm('Mark consultation #APT-{{ $apt->id }} for {{ addslashes($apt->patient->full_name) }} as completed?');" class="inline">
+                            @csrf
+                            <input type="hidden" name="status" value="completed">
+                            <button type="submit" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-xl transition flex items-center gap-1.5" title="Mark this consultation as completed immediately">
+                                <i class="fa-solid fa-check"></i> Complete
+                            </button>
+                        </form>
                         @else
                         <span class="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-1">
                             <i class="fa-solid fa-check-double"></i> Finished

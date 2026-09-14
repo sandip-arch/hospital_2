@@ -49,9 +49,17 @@ class SystemSettingController extends Controller
             }
         }
 
-        AuditService::log('UPDATE', 'system_settings', null, 'Updated hospital system configuration settings');
+        // Synchronize ambulance fleet GPS locations to reflect new hospital base coordinates
+        if (!empty($validated['hospital_latitude']) && !empty($validated['hospital_longitude'])) {
+            \App\Http\Controllers\AmbulanceController::syncFleetToHospitalBase(
+                (float) $validated['hospital_latitude'],
+                (float) $validated['hospital_longitude']
+            );
+        }
 
-        return back()->with('success', 'System settings saved successfully!');
+        AuditService::log('UPDATE', 'system_settings', null, 'Updated hospital system configuration settings and synced ambulance GPS base');
+
+        return back()->with('success', "System settings saved successfully! All ambulance fleet GPS systems have been synchronized to {$validated['hospital_name']} base.");
     }
 
     public function storeSetting(Request $request)

@@ -158,9 +158,9 @@
             </div>
             <div>
                 <h4 class="font-heading text-white font-bold text-sm mb-4">Contact Info</h4>
-                <p class="text-xs text-slate-400 mb-2 font-medium"><i class="fa-solid fa-map-pin text-cyan-400 mr-1.5"></i> 500 Health Sciences Blvd, Boston MA 02115</p>
-                <p class="text-xs text-slate-400 mb-2 font-medium"><i class="fa-solid fa-phone text-cyan-400 mr-1.5"></i> +1 (800) 555-APEX / +1 (555) 019-9000</p>
-                <p class="text-xs text-slate-400 font-medium"><i class="fa-solid fa-envelope text-cyan-400 mr-1.5"></i> contact@apexmedical.test</p>
+                <p class="text-xs text-slate-400 mb-2 font-medium"><i class="fa-solid fa-map-pin text-cyan-400 mr-1.5"></i> {{ $hospitalSettings['hospital_address'] ?? '500 Health Sciences Blvd, Boston MA 02115' }}</p>
+                <p class="text-xs text-slate-400 mb-2 font-medium"><i class="fa-solid fa-phone text-cyan-400 mr-1.5"></i> {{ $hospitalSettings['hospital_phone'] ?? '+1 (800) 555-APEX / +1 (555) 019-9000' }}</p>
+                <p class="text-xs text-slate-400 font-medium"><i class="fa-solid fa-envelope text-cyan-400 mr-1.5"></i> {{ $hospitalSettings['hospital_email'] ?? 'contact@apexmedical.test' }}</p>
             </div>
         </div>
         <div class="max-w-7xl mx-auto px-6 pt-8 mt-12 border-t border-slate-900 text-center text-xs text-slate-500 font-medium">

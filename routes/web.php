@@ -203,5 +203,6 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/ambulances/{id}', [AmbulanceAdminController::class, 'destroy'])->name('ambulances.destroy');
         Route::get('/ambulance-drivers', [AmbulanceAdminController::class, 'drivers'])->name('ambulances.drivers');
         Route::post('/ambulance-drivers', [AmbulanceAdminController::class, 'storeDriver'])->name('ambulances.drivers.store');
+        Route::post('/ambulances/sync-gps', [AmbulanceAdminController::class, 'syncFleetGps'])->name('ambulances.syncGps');
     });
 });

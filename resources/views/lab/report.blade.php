@@ -22,8 +22,8 @@
         <!-- Header -->
         <div class="flex items-center justify-between pb-6 border-b-2 border-slate-900">
             <div>
-                <h1 class="text-2xl font-black text-slate-900">Apex Horizon Diagnostic Laboratories</h1>
-                <p class="text-xs text-slate-500">500 Health Sciences Blvd, Boston MA 02115 &bull; Accredited by CAP / CLIA</p>
+                <h1 class="text-2xl font-black text-slate-900">{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }} Diagnostic Laboratories</h1>
+                <p class="text-xs text-slate-500">{{ $hospitalSettings['hospital_address'] ?? '500 Health Sciences Blvd, Boston MA 02115' }} &bull; Accredited by CAP / CLIA</p>
                 <p class="text-xs text-purple-700 font-bold uppercase tracking-wider mt-1">Official Diagnostic Laboratory Report</p>
             </div>
             <div class="text-right">

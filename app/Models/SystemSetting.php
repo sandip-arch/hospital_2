@@ -15,7 +15,10 @@ class SystemSetting extends Model
     public static function get(string $key, mixed $default = null): mixed
     {
         $setting = static::where('setting_key', $key)->first();
-        return $setting ? $setting->setting_value : $default;
+        if ($setting && $setting->setting_value !== null && $setting->setting_value !== '') {
+            return $setting->setting_value;
+        }
+        return $default;
     }
 
     public static function set(string $key, mixed $value, ?string $description = null): void

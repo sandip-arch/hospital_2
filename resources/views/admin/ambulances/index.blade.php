@@ -16,7 +16,14 @@
             </h1>
             <p class="text-xs text-slate-500 mt-0.5">Register, monitor telemetry, assign drivers, and maintain the hospital emergency ambulance fleet.</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+            <form action="{{ route('admin.ambulances.syncGps') }}" method="POST" class="inline" onsubmit="return confirm('Synchronize and station all fleet ambulances around current hospital base coordinates?');">
+                @csrf
+                <button type="submit" class="px-4 py-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm flex items-center gap-2 transition" title="Synchronize GPS coordinates of ambulances to match hospital base">
+                    <i class="fa-solid fa-arrows-rotate text-cyan-600"></i>
+                    <span>Sync Fleet GPS to Base</span>
+                </button>
+            </form>
             <a href="{{ route('admin.ambulances.drivers') }}" class="px-4 py-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm flex items-center gap-2 transition">
                 <i class="fa-solid fa-id-card-clip text-cyan-600"></i>
                 <span>Driver Roster ({{ $stats['total_drivers'] }})</span>

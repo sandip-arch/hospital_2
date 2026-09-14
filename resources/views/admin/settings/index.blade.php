@@ -114,7 +114,7 @@
                                 <i class="fa-solid fa-location-dot text-rose-600"></i> Dynamic Facility Coordinates & Map Pinning
                             </h5>
                             <p class="text-[11px] text-slate-500 mt-0.5">
-                                Set hospital geographic anchor dynamically using your device location or click/drag the pin anywhere on the map.
+                                Set hospital geographic anchor dynamically using your device location or click/drag the pin anywhere on the map. Saving settings automatically synchronizes and stations all ambulance fleet GPS systems around this base.
                             </p>
                         </div>
 

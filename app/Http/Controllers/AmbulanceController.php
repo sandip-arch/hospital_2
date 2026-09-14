@@ -21,6 +21,73 @@ class AmbulanceController extends Controller
     public const HOSPITAL_ADDRESS = '500 Health Sciences Blvd, Boston MA';
 
     /**
+     * Get active hospital base profile and coordinates dynamically from SystemSetting.
+     */
+    public static function getHospitalInfo(): array
+    {
+        return [
+            'name' => \App\Models\SystemSetting::get('hospital_name', self::HOSPITAL_NAME),
+            'lat' => (float) \App\Models\SystemSetting::get('hospital_latitude', self::HOSPITAL_LAT),
+            'lng' => (float) \App\Models\SystemSetting::get('hospital_longitude', self::HOSPITAL_LNG),
+            'address' => \App\Models\SystemSetting::get('hospital_address', self::HOSPITAL_ADDRESS),
+        ];
+    }
+
+    /**
+     * Synchronize and station fleet ambulances around the active hospital base coordinates.
+     */
+    public static function syncFleetToHospitalBase(?float $baseLat = null, ?float $baseLng = null): int
+    {
+        $hInfo = self::getHospitalInfo();
+        $centerLat = $baseLat ?? (float) $hInfo['lat'];
+        $centerLng = $baseLng ?? (float) $hInfo['lng'];
+
+        if (!$centerLat || !$centerLng) {
+            return 0;
+        }
+
+        // Reposition ambulances that are available or in maintenance (not active in-transit dispatches)
+        $ambulances = Ambulance::whereNotIn('status', ['dispatched', 'in_transit'])->get();
+        if ($ambulances->isEmpty()) {
+            $ambulances = Ambulance::all();
+        }
+
+        if ($ambulances->isEmpty()) {
+            return 0;
+        }
+
+        $radiiKm = [0.6, 1.2, 1.8, 2.4, 3.0, 0.9, 1.5, 2.1];
+        $earthRadius = 6371.0;
+        $count = count($ambulances);
+
+        foreach ($ambulances as $i => $amb) {
+            $distKm = $radiiKm[$i % count($radiiKm)];
+            $angleDeg = ($i * (360.0 / max(1, $count))) + (($i % 2 === 0 ? 1 : -1) * 12);
+            $bearingRad = deg2rad($angleDeg);
+
+            $centerLatRad = deg2rad($centerLat);
+            $centerLngRad = deg2rad($centerLng);
+            $distRatio = $distKm / $earthRadius;
+
+            $newLatRad = asin(sin($centerLatRad) * cos($distRatio) + cos($centerLatRad) * sin($distRatio) * cos($bearingRad));
+            $newLngRad = $centerLngRad + atan2(sin($bearingRad) * sin($distRatio) * cos($centerLatRad), cos($distRatio) - sin($centerLatRad) * sin($newLatRad));
+
+            $newLat = round(rad2deg($newLatRad), 7);
+            $newLng = round(rad2deg($newLngRad), 7);
+
+            $amb->update([
+                'current_latitude' => $newLat,
+                'current_longitude' => $newLng,
+                'last_location_update' => now(),
+            ]);
+        }
+
+        AuditService::log('SYNC_FLEET_GPS', 'ambulances', null, "Synchronized {$count} ambulance GPS locations to hospital base ({$centerLat}, {$centerLng})");
+
+        return $count;
+    }
+
+    /**
      * Calculate spherical distance between two coordinate pairs in kilometers (Haversine formula).
      */
     public static function calculateDistanceKm(float $lat1, float $lon1, float $lat2, float $lon2): float
@@ -112,12 +179,7 @@ class AmbulanceController extends Controller
             'maintenance' => Ambulance::where('status', 'maintenance')->count(),
         ];
 
-        $hospital = [
-            'name' => \App\Models\SystemSetting::get('hospital_name', self::HOSPITAL_NAME),
-            'lat' => (float) \App\Models\SystemSetting::get('hospital_latitude', self::HOSPITAL_LAT),
-            'lng' => (float) \App\Models\SystemSetting::get('hospital_longitude', self::HOSPITAL_LNG),
-            'address' => \App\Models\SystemSetting::get('hospital_address', self::HOSPITAL_ADDRESS),
-        ];
+        $hospital = self::getHospitalInfo();
 
         return view('ambulance.index', compact('ambulances', 'stats', 'hospital', 'userLat', 'userLng', 'radius'));
     }
@@ -145,12 +207,7 @@ class AmbulanceController extends Controller
             $patient = $user->patient;
         }
 
-        $hospital = [
-            'name' => \App\Models\SystemSetting::get('hospital_name', self::HOSPITAL_NAME),
-            'lat' => (float) \App\Models\SystemSetting::get('hospital_latitude', self::HOSPITAL_LAT),
-            'lng' => (float) \App\Models\SystemSetting::get('hospital_longitude', self::HOSPITAL_LNG),
-            'address' => \App\Models\SystemSetting::get('hospital_address', self::HOSPITAL_ADDRESS),
-        ];
+        $hospital = self::getHospitalInfo();
 
         $prefillLat = $request->query('pickup_lat');
         $prefillLng = $request->query('pickup_lng');
@@ -288,12 +345,7 @@ class AmbulanceController extends Controller
             }
         ])->findOrFail($booking_id);
 
-        $hospital = [
-            'name' => self::HOSPITAL_NAME,
-            'lat' => self::HOSPITAL_LAT,
-            'lng' => self::HOSPITAL_LNG,
-            'address' => self::HOSPITAL_ADDRESS,
-        ];
+        $hospital = self::getHospitalInfo();
 
         return view('ambulance.track', compact('booking', 'hospital'));
     }
@@ -384,12 +436,7 @@ class AmbulanceController extends Controller
         }
 
         return response()->json([
-            'hospital' => [
-                'name' => \App\Models\SystemSetting::get('hospital_name', self::HOSPITAL_NAME),
-                'lat' => (float) \App\Models\SystemSetting::get('hospital_latitude', self::HOSPITAL_LAT),
-                'lng' => (float) \App\Models\SystemSetting::get('hospital_longitude', self::HOSPITAL_LNG),
-                'address' => \App\Models\SystemSetting::get('hospital_address', self::HOSPITAL_ADDRESS),
-            ],
+            'hospital' => self::getHospitalInfo(),
             'user_location' => ($userLat !== null && $userLng !== null) ? ['lat' => $userLat, 'lng' => $userLng] : null,
             'ambulances' => $ambulances,
         ]);
@@ -460,6 +507,7 @@ class AmbulanceController extends Controller
             'destinationDepartment'
         ])->findOrFail($booking_id);
 
+        $hInfo = self::getHospitalInfo();
         $amb = $booking->ambulance;
 
         // Calculate distance between ambulance and pickup (Haversine formula in km)
@@ -492,9 +540,10 @@ class AmbulanceController extends Controller
                 'lng' => $booking->pickup_longitude,
             ],
             'hospital' => [
-                'name' => self::HOSPITAL_NAME,
-                'lat' => self::HOSPITAL_LAT,
-                'lng' => self::HOSPITAL_LNG,
+                'name' => $hInfo['name'],
+                'lat' => $hInfo['lat'],
+                'lng' => $hInfo['lng'],
+                'address' => $hInfo['address'],
                 'department' => $booking->destinationDepartment?->name ?? 'Emergency Medicine',
             ],
             'ambulance' => [
@@ -586,10 +635,11 @@ class AmbulanceController extends Controller
                 'booking_status' => 'completed',
                 'completed_at' => now(),
             ]);
+            $hInfo = self::getHospitalInfo();
             $amb->update([
                 'status' => 'available',
-                'current_latitude' => self::HOSPITAL_LAT,
-                'current_longitude' => self::HOSPITAL_LNG,
+                'current_latitude' => $hInfo['lat'],
+                'current_longitude' => $hInfo['lng'],
                 'last_location_update' => now(),
             ]);
         }

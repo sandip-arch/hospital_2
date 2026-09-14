@@ -160,4 +160,61 @@ class HospitalLocationAndDriverRosterTest extends TestCase
         $this->assertEquals('-71.1072000', SystemSetting::get('hospital_longitude'));
         $this->assertEquals('750 Longwood Avenue, Boston, MA 02115', SystemSetting::get('hospital_address'));
     }
+
+    public function test_updating_system_settings_repositions_ambulance_fleet_and_track_view_shows_updated_hospital(): void
+    {
+        $admin = User::where('email', 'admin@hospital.test')->first();
+        $this->assertNotNull($admin);
+
+        // Update settings to Kolkata coordinates
+        $response = $this->actingAs($admin)->from('/admin/settings')->post(route('admin.settings.update'), [
+            'hospital_name' => 'Metro Care Hospital Kolkata',
+            'hospital_phone' => '+91 33 2500 0000',
+            'hospital_email' => 'kolkata@metrocare.test',
+            'hospital_address' => '100 EM Bypass, Salt Lake, Kolkata, WB 700098',
+            'hospital_latitude' => '22.5726460',
+            'hospital_longitude' => '88.3638950',
+            'tax_rate_percent' => '5.0',
+            'currency_symbol' => '₹',
+            'appointment_slot_duration_minutes' => 20,
+            'emergency_contact_number' => '108',
+        ]);
+
+        $response->assertRedirect('/admin/settings');
+        $response->assertSessionHas('success');
+
+        // 1. Verify fleet ambulances were repositioned around new base (~22.57, ~88.36), not Boston (42.33, -71.10)
+        $ambulance = Ambulance::first();
+        $this->assertNotNull($ambulance);
+        $this->assertEqualsWithDelta(22.57, $ambulance->current_latitude, 0.1, 'Ambulance latitude must be near Kolkata base');
+        $this->assertEqualsWithDelta(88.36, $ambulance->current_longitude, 0.1, 'Ambulance longitude must be near Kolkata base');
+
+        // 2. Book an ambulance and test track view & API
+        $bookResponse = $this->post(route('ambulance.book.submit'), [
+            'contact_phone' => '+91 9876543210',
+            'pickup_address' => 'Park Street, Kolkata, WB 700016',
+            'pickup_latitude' => '22.5532000',
+            'pickup_longitude' => '88.3512000',
+            'patient_name' => 'Amit Sen',
+        ]);
+
+        $booking = \App\Models\AmbulanceBooking::latest('id')->first();
+        $this->assertNotNull($booking);
+        $bookResponse->assertRedirect(route('ambulance.track', $booking->id));
+
+        // 3. Track view must show Kolkata address, and MUST NOT show Boston
+        $trackPage = $this->get(route('ambulance.track', $booking->id));
+        $trackPage->assertStatus(200);
+        $trackPage->assertSee('Metro Care Hospital Kolkata');
+        $trackPage->assertSee('100 EM Bypass, Salt Lake, Kolkata, WB 700098');
+        $trackPage->assertDontSee('500 Health Sciences Blvd, Boston MA');
+
+        // 4. API track must also return updated hospital info
+        $apiTrack = $this->getJson(route('ambulance.api.track', $booking->id));
+        $apiTrack->assertStatus(200);
+        $apiTrack->assertJsonPath('hospital.name', 'Metro Care Hospital Kolkata');
+        $apiTrack->assertJsonPath('hospital.address', '100 EM Bypass, Salt Lake, Kolkata, WB 700098');
+        $this->assertEqualsWithDelta(22.5726460, $apiTrack->json('hospital.lat'), 0.0001);
+        $this->assertEqualsWithDelta(88.3638950, $apiTrack->json('hospital.lng'), 0.0001);
+    }
 }

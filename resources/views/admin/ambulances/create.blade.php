@@ -144,7 +144,7 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">
                             Station Base Latitude <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="inputLat" name="current_latitude" value="{{ old('current_latitude') }}" required
+                        <input type="text" id="inputLat" name="current_latitude" value="{{ old('current_latitude', $hospital['lat'] ?? '') }}" required
                                class="w-full text-xs font-mono font-semibold px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:bg-white transition">
                     </div>
 
@@ -152,7 +152,7 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">
                             Station Base Longitude <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="inputLng" name="current_longitude" value="{{ old('current_longitude') }}" required
+                        <input type="text" id="inputLng" name="current_longitude" value="{{ old('current_longitude', $hospital['lng'] ?? '') }}" required
                                class="w-full text-xs font-mono font-semibold px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:bg-white transition">
                     </div>
                 </div>
@@ -184,8 +184,8 @@
         let initLng = parseFloat(lngInput.value);
 
         const hasInitial = !isNaN(initLat) && !isNaN(initLng);
-        const mapCenter = hasInitial ? [initLat, initLng] : [20.5937, 78.9629]; // India / default center before GPS
-        const zoomLevel = hasInitial ? 15 : 4;
+        const mapCenter = hasInitial ? [initLat, initLng] : [{{ $hospital['lat'] ?? 22.6274796 }}, {{ $hospital['lng'] ?? 88.4089137 }}];
+        const zoomLevel = hasInitial ? 15 : 13;
 
         const map = L.map('stationMap', {
             zoomControl: true,

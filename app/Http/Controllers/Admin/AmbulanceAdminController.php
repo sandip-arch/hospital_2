@@ -56,7 +56,9 @@ class AmbulanceAdminController extends Controller
             ->where('is_available', true)
             ->get();
 
-        return view('admin.ambulances.create', compact('availableDrivers', 'availableDoctors'));
+        $hospital = \App\Http\Controllers\AmbulanceController::getHospitalInfo();
+
+        return view('admin.ambulances.create', compact('availableDrivers', 'availableDoctors', 'hospital'));
     }
 
     /**
@@ -76,10 +78,9 @@ class AmbulanceAdminController extends Controller
         ]);
 
         // Default to hospital location if coordinates not provided
-        $hLat = (float) \App\Models\SystemSetting::get('hospital_latitude', 42.3375000);
-        $hLng = (float) \App\Models\SystemSetting::get('hospital_longitude', -71.1065000);
-        $validated['current_latitude'] = $validated['current_latitude'] ?? $hLat;
-        $validated['current_longitude'] = $validated['current_longitude'] ?? $hLng;
+        $hInfo = \App\Http\Controllers\AmbulanceController::getHospitalInfo();
+        $validated['current_latitude'] = $validated['current_latitude'] ?? $hInfo['lat'];
+        $validated['current_longitude'] = $validated['current_longitude'] ?? $hInfo['lng'];
         $validated['last_location_update'] = now();
 
         $ambulance = Ambulance::create($validated);
@@ -217,5 +218,16 @@ class AmbulanceAdminController extends Controller
         AuditService::log('CREATE_DRIVER', 'ambulance_drivers', $driver->id, "Ambulance Driver profile created for user ID {$driver->user_id}.");
 
         return back()->with('success', 'Ambulance driver registered successfully.');
+    }
+
+    /**
+     * Explicit action to sync entire ambulance fleet GPS to the hospital base coordinates.
+     */
+    public function syncFleetGps(Request $request)
+    {
+        $hInfo = \App\Http\Controllers\AmbulanceController::getHospitalInfo();
+        $count = \App\Http\Controllers\AmbulanceController::syncFleetToHospitalBase((float) $hInfo['lat'], (float) $hInfo['lng']);
+
+        return back()->with('success', "Successfully synchronized {$count} ambulance GPS systems with {$hInfo['name']} base coordinates ({$hInfo['lat']}, {$hInfo['lng']}).");
     }
 }

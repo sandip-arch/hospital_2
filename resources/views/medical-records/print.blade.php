@@ -25,8 +25,8 @@
         <!-- Header -->
         <div class="flex items-center justify-between pb-6 border-b-2 border-slate-900">
             <div>
-                <h1 class="text-2xl font-black text-slate-900">Apex Horizon Medical Center</h1>
-                <p class="text-xs text-slate-500">500 Health Sciences Blvd, Boston MA 02115 &bull; Phone: +1 (800) 555-APEX</p>
+                <h1 class="text-2xl font-black text-slate-900">{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon Medical Center' }}</h1>
+                <p class="text-xs text-slate-500">{{ $hospitalSettings['hospital_address'] ?? '500 Health Sciences Blvd, Boston MA 02115' }} &bull; Phone: {{ $hospitalSettings['hospital_phone'] ?? '+1 (800) 555-APEX' }}</p>
                 <p class="text-xs text-cyan-700 font-bold uppercase tracking-wider mt-1">Clinical Consultation Summary</p>
             </div>
             <div class="text-right">
