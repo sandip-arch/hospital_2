@@ -160,15 +160,44 @@ class AmbulanceAdminController extends Controller
     /**
      * Driver roster view.
      */
-    public function drivers()
+    public function drivers(Request $request)
     {
-        $drivers = AmbulanceDriver::with(['user', 'ambulance'])->paginate(15);
-        $candidateUsers = User::whereDoesntHave('ambulanceDriver')
+        $statusFilter = $request->query('status');
+        $search = $request->query('search');
+
+        $query = AmbulanceDriver::with(['user', 'ambulance']);
+
+        if ($statusFilter && in_array($statusFilter, ['on_duty', 'off_duty'])) {
+            $query->where('status', $statusFilter);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('license_number', 'like', "%{$search}%")
+                  ->orWhere('contact_number', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('ambulance', function ($aq) use ($search) {
+                      $aq->where('vehicle_number', 'like', "%{$search}%")
+                         ->orWhere('model', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $drivers = $query->latest('id')->paginate(15)->withQueryString();
+
+        // Candidates for ambulance driver roster: strictly only users with role 'driver' who do not yet have an ambulanceDriver profile
+        $candidateUsers = User::whereHas('roles', function ($q) {
+                $q->where('name', 'driver');
+            })
+            ->whereDoesntHave('ambulanceDriver')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
 
-        return view('admin.ambulances.drivers', compact('drivers', 'candidateUsers'));
+        return view('admin.ambulances.drivers', compact('drivers', 'candidateUsers', 'statusFilter', 'search'));
     }
 
     /**

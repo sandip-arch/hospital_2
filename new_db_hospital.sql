@@ -1378,10 +1378,10 @@ INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
 (11, 4),
 (12, 5),
 (13, 5),
-(14, 4),
-(15, 4),
-(16, 4),
-(17, 4),
+(14, 7),
+(15, 7),
+(16, 7),
+(17, 7),
 (18, 5),
 (19, 5);
 
@@ -1500,7 +1500,9 @@ INSERT INTO `system_settings` (`id`, `setting_key`, `setting_value`, `descriptio
 (5, 'tax_rate_percent', '5.0', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
 (6, 'currency_symbol', '$', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
 (7, 'appointment_slot_duration_minutes', '30', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
-(8, 'emergency_contact_number', '911 / +1 (555) 911-0000', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51');
+(8, 'emergency_contact_number', '911 / +1 (555) 911-0000', NULL, '2026-09-07 09:46:10', '2026-09-07 10:01:51'),
+(9, 'hospital_latitude', '42.3375000', 'Dynamic facility GPS latitude anchor', '2026-09-13 07:45:00', '2026-09-13 07:45:00'),
+(10, 'hospital_longitude', '-71.1065000', 'Dynamic facility GPS longitude anchor', '2026-09-13 07:45:00', '2026-09-13 07:45:00');
 
 -- --------------------------------------------------------
 
@@ -2111,7 +2113,7 @@ ALTER TABLE `staff`
 -- AUTO_INCREMENT for table `system_settings`
 --
 ALTER TABLE `system_settings`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `users`

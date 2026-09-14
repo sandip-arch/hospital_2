@@ -26,6 +26,8 @@ class SystemSettingController extends Controller
             'hospital_phone' => 'required|string|max:50',
             'hospital_email' => 'required|email|max:100',
             'hospital_address' => 'required|string|max:255',
+            'hospital_latitude' => 'nullable|numeric|between:-90,90',
+            'hospital_longitude' => 'nullable|numeric|between:-180,180',
             'tax_rate_percent' => 'required|numeric|min:0|max:100',
             'currency_symbol' => 'required|string|max:5',
             'appointment_slot_duration_minutes' => 'required|integer|min:5|max:120',

@@ -12,6 +12,7 @@ use App\Models\Doctor;
 use App\Models\DoctorAvailability;
 use App\Models\Staff;
 use App\Models\AmbulanceDriver;
+use App\Models\Ambulance;
 use App\Services\AuditService;
 
 class UserController extends Controller
@@ -40,7 +41,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(12)->withQueryString();
+        $users = $query->latest('id')->paginate(15)->withQueryString();
         $roles = Role::all();
 
         return view('admin.users.index', compact('users', 'roles'));
@@ -50,7 +51,8 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $departments = Department::all();
-        return view('admin.users.create', compact('roles', 'departments'));
+        $availableAmbulances = Ambulance::whereNull('current_driver_id')->orderBy('vehicle_number')->get();
+        return view('admin.users.create', compact('roles', 'departments', 'availableAmbulances'));
     }
 
     public function store(Request $request)
@@ -91,6 +93,7 @@ class UserController extends Controller
             'driver_license_number' => 'nullable|string|max:50',
             'driver_phone' => 'nullable|string|max:20',
             'driver_status' => 'nullable|in:on_duty,off_duty',
+            'ambulance_id' => 'nullable|exists:ambulances,id',
         ]);
 
         $user = User::create([
@@ -134,12 +137,16 @@ class UserController extends Controller
                 'hire_date' => now()->toDateString(),
             ]);
         } elseif ($role->name === 'driver') {
-            AmbulanceDriver::create([
+            $driver = AmbulanceDriver::create([
                 'user_id' => $user->id,
                 'license_number' => $request->input('driver_license_number') ?: ($request->input('license_number') ?: 'DRV-' . strtoupper(uniqid())),
                 'contact_number' => $request->input('driver_phone') ?: ($request->input('contact_number') ?: '+1 (555) 000-0000'),
                 'status' => $request->input('driver_status') ?: 'on_duty',
             ]);
+
+            if ($request->filled('ambulance_id')) {
+                Ambulance::where('id', $request->ambulance_id)->update(['current_driver_id' => $driver->id]);
+            }
         }
 
         AuditService::log('CREATE', 'users', $user->id, "Admin created user {$user->name} with role {$role->name}");
@@ -149,10 +156,17 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        $user = User::with(['roles', 'doctor', 'staff', 'ambulanceDriver'])->findOrFail($id);
+        $user = User::with(['roles', 'doctor', 'staff', 'ambulanceDriver.ambulance'])->findOrFail($id);
         $roles = Role::all();
         $departments = Department::all();
-        return view('admin.users.edit', compact('user', 'roles', 'departments'));
+        $driverId = $user->ambulanceDriver?->id;
+        $availableAmbulances = Ambulance::whereNull('current_driver_id')
+            ->when($driverId, function ($q) use ($driverId) {
+                $q->orWhere('current_driver_id', $driverId);
+            })
+            ->orderBy('vehicle_number')
+            ->get();
+        return view('admin.users.edit', compact('user', 'roles', 'departments', 'availableAmbulances'));
     }
 
     public function update(Request $request, $id)
@@ -176,6 +190,7 @@ class UserController extends Controller
             'driver_license_number' => 'nullable|string|max:50',
             'driver_phone' => 'nullable|string|max:20',
             'driver_status' => 'nullable|in:on_duty,off_duty',
+            'ambulance_id' => 'nullable',
         ]);
 
         $user->name = $validated['name'];
@@ -202,7 +217,14 @@ class UserController extends Controller
                 $driver->update($driverData);
             } else {
                 $driverData['user_id'] = $user->id;
-                AmbulanceDriver::create($driverData);
+                $driver = AmbulanceDriver::create($driverData);
+            }
+
+            if ($request->has('ambulance_id')) {
+                Ambulance::where('current_driver_id', $driver->id)->update(['current_driver_id' => null]);
+                if ($request->filled('ambulance_id')) {
+                    Ambulance::where('id', $request->ambulance_id)->update(['current_driver_id' => $driver->id]);
+                }
             }
         }
 
