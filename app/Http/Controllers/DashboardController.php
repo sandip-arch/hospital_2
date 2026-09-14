@@ -177,21 +177,32 @@ class DashboardController extends Controller
         $patient = $user->patient;
 
         if (!$patient) {
-            // Auto-create patient profile if user is patient
-            $count = Patient::count() + 1;
-            $upi = 'PAT-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
-            $names = explode(' ', $user->name, 2);
+            // Check if patient profile exists by email or phone before auto-creating duplicate
+            $patient = Patient::where('email', $user->email)
+                ->when(!empty($user->phone), fn($q) => $q->orWhere('phone', $user->phone))
+                ->first();
 
-            $patient = Patient::create([
-                'user_id' => $user->id,
-                'patient_code' => $upi,
-                'first_name' => $names[0] ?? 'Patient',
-                'last_name' => $names[1] ?? 'User',
-                'dob' => '1995-01-01',
-                'gender' => 'Other',
-                'phone' => '+1 (555) 000-0000',
-                'email' => $user->email,
-            ]);
+            if ($patient) {
+                if (!$patient->user_id) {
+                    $patient->update(['user_id' => $user->id]);
+                }
+            } else {
+                // Auto-create patient profile if user is patient
+                $count = Patient::count() + 1;
+                $upi = 'PAT-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $names = explode(' ', $user->name, 2);
+
+                $patient = Patient::create([
+                    'user_id' => $user->id,
+                    'patient_code' => $upi,
+                    'first_name' => $names[0] ?? 'Patient',
+                    'last_name' => $names[1] ?? 'User',
+                    'dob' => '1995-01-01',
+                    'gender' => 'Other',
+                    'phone' => '+1 (555) 000-0000',
+                    'email' => $user->email,
+                ]);
+            }
         }
 
         $upcomingAppointments = Appointment::with(['doctor.user', 'department'])
