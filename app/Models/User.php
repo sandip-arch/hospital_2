@@ -103,6 +103,27 @@ class User extends Authenticatable
         return $this->hasOne(Patient::class);
     }
 
+    /**
+     * Resolve patient profile via relation or fallback by email/phone.
+     */
+    public function getPatientAttribute()
+    {
+        $patient = $this->getRelationValue('patient');
+        if ($patient) {
+            return $patient;
+        }
+
+        if (!empty($this->email)) {
+            $matched = Patient::where('email', $this->email)->first();
+            if ($matched) {
+                $this->setRelation('patient', $matched);
+                return $matched;
+            }
+        }
+
+        return null;
+    }
+
     public function ambulanceDriver(): HasOne
     {
         return $this->hasOne(AmbulanceDriver::class);

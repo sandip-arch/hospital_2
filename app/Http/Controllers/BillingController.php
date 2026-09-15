@@ -13,23 +13,26 @@ use App\Models\Notification;
 use App\Services\BillingService;
 use App\Services\AuditService;
 
+use Carbon\Carbon;
+
 class BillingController extends Controller
 {
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Invoice::with(['patient', 'payments', 'appointment.doctor.user']);
+        $baseQuery = Invoice::query();
 
         if ($user->isPatient()) {
             if (!$user->patient) {
                 $invoices = Invoice::whereRaw('1 = 0')->paginate(12);
                 $stats = ['total_invoiced' => 0, 'total_collected' => 0, 'total_unpaid' => 0, 'unpaid_count' => 0];
+                $statusCounts = ['all' => 0, 'unpaid' => 0, 'checking' => 0, 'partially_paid' => 0, 'paid' => 0, 'cancelled' => 0];
                 $consultantSpendings = collect();
-                return view('billing.index', compact('invoices', 'stats', 'consultantSpendings'));
+                return view('billing.index', compact('invoices', 'stats', 'consultantSpendings', 'statusCounts'));
             }
 
             $patientId = $user->patient->id;
-            $query->where('patient_id', $patientId);
+            $baseQuery->where('patient_id', $patientId);
 
             $stats = [
                 'total_invoiced' => (float) Invoice::where('patient_id', $patientId)->sum('net_amount'),
@@ -65,25 +68,112 @@ class BillingController extends Controller
             $consultantSpendings = collect();
         }
 
-        if ($request->filled('status')) {
+        // Status counts for quick filter pills
+        $statusCounts = [
+            'all' => (clone $baseQuery)->count(),
+            'unpaid' => (clone $baseQuery)->where('status', 'unpaid')->count(),
+            'checking' => (clone $baseQuery)->where('status', 'checking')->count(),
+            'partially_paid' => (clone $baseQuery)->where('status', 'partially_paid')->count(),
+            'paid' => (clone $baseQuery)->where('status', 'paid')->count(),
+            'cancelled' => (clone $baseQuery)->where('status', 'cancelled')->count(),
+        ];
+
+        $query = (clone $baseQuery)->with(['patient', 'payments', 'items', 'appointment.doctor.user', 'appointment.department']);
+
+        // Filter: Specific Patient
+        if ($request->filled('patient_id')) {
+            $query->where('patient_id', $request->patient_id);
+        }
+
+        // Filter: Status (support 'all' or empty to mean all)
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('invoice_number', 'like', "%{$search}%")
-                  ->orWhereHas('patient', function ($pq) use ($search) {
-                      $pq->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('patient_code', 'like', "%{$search}%");
-                  });
+        // Filter: Date Range / Preset
+        if ($request->filled('date_preset') && $request->date_preset !== 'all') {
+            $preset = $request->date_preset;
+            if ($preset === 'today') {
+                $query->whereDate('invoice_date', Carbon::today());
+            } elseif ($preset === 'yesterday') {
+                $query->whereDate('invoice_date', Carbon::yesterday());
+            } elseif ($preset === 'this_week') {
+                $query->whereBetween('invoice_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+            } elseif ($preset === 'this_month') {
+                $query->whereBetween('invoice_date', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+            } elseif ($preset === 'last_month') {
+                $query->whereBetween('invoice_date', [Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->subMonth()->endOfMonth()]);
+            }
+        } elseif ($request->filled('date_from') || $request->filled('date_to')) {
+            if ($request->filled('date_from')) {
+                $query->whereDate('invoice_date', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('invoice_date', '<=', $request->date_to);
+            }
+        }
+
+        // Filter: Payment Method
+        if ($request->filled('payment_method') && $request->payment_method !== 'all') {
+            $pm = $request->payment_method;
+            $query->whereHas('payments', function ($pyq) use ($pm) {
+                $pyq->where('payment_method', $pm);
             });
         }
 
-        $invoices = $query->orderBy('invoice_date', 'desc')->paginate(12)->withQueryString();
+        // Multi-field Comprehensive Search
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $cleanNumeric = preg_replace('/[^0-9.]/', '', $search);
 
-        return view('billing.index', compact('invoices', 'stats', 'consultantSpendings'));
+            $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+            $concatExpr = $driver === 'sqlite' ? "(first_name || ' ' || last_name)" : "CONCAT(first_name, ' ', last_name)";
+
+            $query->where(function ($q) use ($search, $cleanNumeric, $concatExpr) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhereHas('patient', function ($pq) use ($search, $concatExpr) {
+                      $pq->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhereRaw("{$concatExpr} LIKE ?", ["%{$search}%"])
+                        ->orWhere('patient_code', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('appointment.doctor.user', function ($dq) use ($search) {
+                      $dq->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('appointment.department', function ($dpq) use ($search) {
+                      $dpq->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('items', function ($iq) use ($search) {
+                      $iq->where('item_description', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('payments', function ($pyq) use ($search) {
+                      $pyq->where('payment_number', 'like', "%{$search}%")
+                         ->orWhere('transaction_reference', 'like', "%{$search}%");
+                  });
+
+                if ($cleanNumeric !== '' && is_numeric($cleanNumeric)) {
+                    $q->orWhere('net_amount', (float)$cleanNumeric)
+                      ->orWhere('total_amount', (float)$cleanNumeric);
+                }
+            });
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'latest');
+        match ($sortBy) {
+            'oldest' => $query->orderBy('invoice_date', 'asc')->orderBy('id', 'asc'),
+            'amount_high' => $query->orderBy('net_amount', 'desc'),
+            'amount_low' => $query->orderBy('net_amount', 'asc'),
+            'due_soon' => $query->where('status', '!=', 'paid')->orderBy('due_date', 'asc'),
+            default => $query->orderBy('invoice_date', 'desc')->orderBy('id', 'desc'),
+        };
+
+        $invoices = $query->paginate(12)->withQueryString();
+
+        return view('billing.index', compact('invoices', 'stats', 'consultantSpendings', 'statusCounts'));
     }
 
     public function create()

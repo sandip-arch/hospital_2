@@ -5,7 +5,25 @@
 @section('header_subtitle', 'UPI: ' . $patient->patient_code . ' • 360° Comprehensive Medical Dossier')
 
 @section('content')
-<div class="space-y-6" x-data="{ activeTab: 'overview' }">
+<div class="space-y-6" x-data="{ activeTab: '{{ request('tab', 'overview') }}', billingFilter: '{{ in_array(request('status'), ['paid', 'unpaid', 'partially_paid', 'checking', 'cancelled']) ? request('status') : 'all' }}', billingSearch: '' }">
+
+    @if(request('from') === 'billing')
+    <!-- Back to Billing Desk Navigation Banner -->
+    <div class="bg-gradient-to-r from-cyan-600 to-blue-700 rounded-3xl p-5 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white text-xl shrink-0">
+                <i class="fa-solid fa-receipt"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-base">Patient Billing Dossier & Ledger</h3>
+                <p class="text-xs text-cyan-100 mt-0.5">Reviewing complete invoice records, payment receipts, and financial history for {{ $patient->full_name }}</p>
+            </div>
+        </div>
+        <a href="{{ route('billing.index') }}" class="px-4 py-2 bg-white text-slate-900 hover:bg-cyan-50 font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2 shrink-0">
+            <i class="fa-solid fa-arrow-left"></i> Back to Billing Desk
+        </a>
+    </div>
+    @endif
 
     <!-- Patient Master Profile Banner -->
     <div class="bg-white rounded-3xl p-6 lg:p-8 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -108,6 +126,40 @@
                     @empty
                     <p class="text-slate-400">No emergency contacts registered.</p>
                     @endforelse
+                </div>
+
+                <!-- Quick Financial Health Widget -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm text-xs space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-receipt text-cyan-600"></i> Billing & Balance
+                        </h4>
+                        <button type="button" @click="activeTab = 'billing'" class="text-[11px] font-bold text-cyan-600 hover:underline">
+                            View Ledger &rarr;
+                        </button>
+                    </div>
+                    @php
+                        $overviewBilled = (float) $patient->invoices->sum('net_amount');
+                        $overviewPaid = (float) $patient->invoices->sum(fn($i) => $i->paid_amount);
+                        $overviewDue = max(0.00, $overviewBilled - $overviewPaid);
+                    @endphp
+                    <div class="p-3.5 bg-slate-50 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Total Invoiced:</span>
+                            <span class="font-bold text-slate-800">${{ number_format($overviewBilled, 2) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Total Settled:</span>
+                            <span class="font-bold text-emerald-600">${{ number_format($overviewPaid, 2) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                            <span class="font-bold text-slate-700">Outstanding:</span>
+                            <span class="font-black {{ $overviewDue > 0 ? 'text-rose-600' : 'text-emerald-600' }} text-sm">${{ number_format($overviewDue, 2) }}</span>
+                        </div>
+                    </div>
+                    <button type="button" @click="activeTab = 'billing'" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-file-invoice-dollar text-cyan-600"></i> Open Patient Ledger ({{ $patient->invoices->count() }})
+                    </button>
                 </div>
             </div>
 
@@ -346,50 +398,304 @@
         </div>
     </div>
 
-    <!-- Tab 7: Billing -->
-    <div x-show="activeTab === 'billing'" class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm" x-cloak>
-        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <h4 class="font-bold text-slate-900 text-base">Invoices & Financial Ledger</h4>
-            <a href="{{ route('billing.create', ['patient_id' => $patient->id]) }}" class="px-3.5 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl shadow-sm">
-                + Create Custom Bill
-            </a>
+    <!-- Tab 7: Billing & Financial History -->
+    <div x-show="activeTab === 'billing'" class="space-y-6" x-cloak>
+        @php
+            $patientTotalInvoiced = (float) $patient->invoices->sum('net_amount');
+            $patientTotalPaid = (float) $patient->invoices->sum(fn($i) => $i->paid_amount);
+            $patientBalanceDue = max(0.00, $patientTotalInvoiced - $patientTotalPaid);
+            $patientUnpaidCount = $patient->invoices->whereIn('status', ['unpaid', 'checking', 'partially_paid'])->count();
+            $patientPayments = $patient->invoices->flatMap->payments->sortByDesc('payment_date');
+        @endphp
+
+        <!-- Patient Financial Metrics KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Billed</p>
+                    <h4 class="text-2xl font-black text-slate-900 mt-1">${{ number_format($patientTotalInvoiced, 2) }}</h4>
+                    <p class="text-[10px] text-slate-500 mt-0.5">{{ $patient->invoices->count() }} Total Invoices</p>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Settled</p>
+                    <h4 class="text-2xl font-black text-emerald-600 mt-1">${{ number_format($patientTotalPaid, 2) }}</h4>
+                    <p class="text-[10px] text-emerald-600 mt-0.5 font-semibold">Completed Payments</p>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Outstanding Balance</p>
+                    <h4 class="text-2xl font-black text-rose-600 mt-1">${{ number_format($patientBalanceDue, 2) }}</h4>
+                    <p class="text-[10px] text-rose-600 mt-0.5 font-semibold">Pending Patient Clearance</p>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Invoices</p>
+                    <h4 class="text-2xl font-black text-amber-600 mt-1">{{ $patientUnpaidCount }}</h4>
+                    <p class="text-[10px] text-amber-600 mt-0.5 font-semibold">Awaiting Settlement</p>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+            </div>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200/80">
-                        <th class="py-3 px-4">Invoice #</th>
-                        <th class="py-3 px-4">Date</th>
-                        <th class="py-3 px-4">Net Total</th>
-                        <th class="py-3 px-4">Paid</th>
-                        <th class="py-3 px-4">Balance</th>
-                        <th class="py-3 px-4">Status</th>
-                        <th class="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse($patient->invoices as $inv)
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-3 px-4 font-mono font-bold text-slate-900">{{ $inv->invoice_number }}</td>
-                        <td class="py-3 px-4">{{ $inv->invoice_date->format('M d, Y') }}</td>
-                        <td class="py-3 px-4 font-bold text-slate-900">${{ number_format($inv->net_amount, 2) }}</td>
-                        <td class="py-3 px-4 text-emerald-600 font-bold">${{ number_format($inv->paid_amount, 2) }}</td>
-                        <td class="py-3 px-4 text-rose-600 font-black">${{ number_format($inv->balance_due, 2) }}</td>
-                        <td class="py-3 px-4">
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border {{ $inv->status_badge }}">
-                                {{ ucfirst($inv->status) }}
-                            </span>
-                        </td>
-                        <td class="py-3 px-4 text-right space-x-1">
-                            <a href="{{ route('billing.show', $inv->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[11px]">View</a>
-                            <a href="{{ route('billing.print', $inv->id) }}" target="_blank" class="px-2.5 py-1 bg-slate-900 text-white font-bold rounded-lg text-[11px]"><i class="fa-solid fa-print"></i></a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="7" class="py-8 text-center text-slate-400">No invoices issued.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+
+        <!-- Invoices & Billing Ledger Container -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                <div>
+                    <h4 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-file-invoice text-cyan-600"></i> Patient Invoices & Ledger
+                    </h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Filter by payment status or search specific invoices and treatments</p>
+                </div>
+                @if(!Auth::user()->isPatient())
+                <a href="{{ route('billing.create', ['patient_id' => $patient->id]) }}" class="px-3.5 py-2 bg-slate-900 hover:bg-cyan-600 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-file-circle-plus"></i> Create Custom Bill
+                </a>
+                @endif
+            </div>
+
+            <!-- Filter Bar: Statuses & Search -->
+            <div class="space-y-3">
+                <!-- Status Filter Pills -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold custom-scrollbar">
+                    <button type="button" @click="billingFilter = 'all'"
+                            :class="billingFilter === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                        <span>All Invoices</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px]" :class="billingFilter === 'all' ? 'bg-slate-800 text-cyan-300' : 'bg-white text-slate-700'">
+                            {{ $patient->invoices->count() }}
+                        </span>
+                    </button>
+
+                    <button type="button" @click="billingFilter = 'paid'"
+                            :class="billingFilter === 'paid' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'"
+                            class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                        <i class="fa-solid fa-circle-check text-[10px]"></i>
+                        <span>Paid</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px]" :class="billingFilter === 'paid' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'">
+                            {{ $patient->invoices->where('status', 'paid')->count() }}
+                        </span>
+                    </button>
+
+                    <button type="button" @click="billingFilter = 'unpaid'"
+                            :class="billingFilter === 'unpaid' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'"
+                            class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                        <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                        <span>Unpaid</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px]" :class="billingFilter === 'unpaid' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800'">
+                            {{ $patient->invoices->where('status', 'unpaid')->count() }}
+                        </span>
+                    </button>
+
+                    <button type="button" @click="billingFilter = 'partially_paid'"
+                            :class="billingFilter === 'partially_paid' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'"
+                            class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                        <i class="fa-solid fa-percent text-[10px]"></i>
+                        <span>Partially Paid</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px]" :class="billingFilter === 'partially_paid' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-800'">
+                            {{ $patient->invoices->where('status', 'partially_paid')->count() }}
+                        </span>
+                    </button>
+
+                    <button type="button" @click="billingFilter = 'checking'"
+                            :class="billingFilter === 'checking' ? 'bg-amber-500 text-white shadow-sm' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'"
+                            class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                        <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                        <span>Under Verification</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px]" :class="billingFilter === 'checking' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-800'">
+                            {{ $patient->invoices->where('status', 'checking')->count() }}
+                        </span>
+                    </button>
+
+                    <button type="button" @click="billingFilter = 'cancelled'"
+                            :class="billingFilter === 'cancelled' ? 'bg-slate-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'"
+                            class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                        <span>Cancelled</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px]" :class="billingFilter === 'cancelled' ? 'bg-slate-800 text-slate-300' : 'bg-white text-slate-700'">
+                            {{ $patient->invoices->where('status', 'cancelled')->count() }}
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Instant Search Input -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" x-model="billingSearch" placeholder="Search patient's invoices by invoice #, doctor, service or item description..."
+                           class="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <button type="button" x-show="billingSearch" @click="billingSearch = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs" title="Clear filter">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Invoices Table -->
+            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200/80">
+                            <th class="py-3.5 px-4">Invoice #</th>
+                            <th class="py-3.5 px-4">Date & Due</th>
+                            <th class="py-3.5 px-4">Consultant / Service</th>
+                            <th class="py-3.5 px-4">Billed Items</th>
+                            <th class="py-3.5 px-4">Net Total</th>
+                            <th class="py-3.5 px-4">Settled</th>
+                            <th class="py-3.5 px-4">Balance</th>
+                            <th class="py-3.5 px-4">Status</th>
+                            <th class="py-3.5 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($patient->invoices->sortByDesc('invoice_date') as $inv)
+                        @php
+                            $searchKeywords = strtolower($inv->invoice_number . ' ' . ($inv->appointment?->doctor?->user?->name ?? '') . ' ' . ($inv->appointment?->department?->name ?? '') . ' ' . $inv->items->pluck('item_description')->join(' ') . ' ' . $inv->notes);
+                        @endphp
+                        <tr class="hover:bg-slate-50/80 transition"
+                            x-show="(billingFilter === 'all' || billingFilter === '{{ $inv->status }}') && (billingSearch === '' || {{ json_encode($searchKeywords) }}.includes(billingSearch.toLowerCase()))">
+                            <td class="py-3.5 px-4 font-mono font-bold text-slate-900">
+                                <a href="{{ route('billing.show', $inv->id) }}" class="text-cyan-700 hover:underline">
+                                    {{ $inv->invoice_number }}
+                                </a>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-600">
+                                <div>{{ $inv->invoice_date->format('M d, Y') }}</div>
+                                <div class="text-[10px] text-slate-400">Due: {{ $inv->due_date->format('M d, Y') }}</div>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-700">
+                                <div class="font-semibold text-slate-900">{{ $inv->appointment?->doctor?->user?->name ?? 'Hospital Service' }}</div>
+                                <div class="text-[10px] text-slate-400">{{ $inv->appointment?->department?->name ?? 'General' }}</div>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-600 max-w-[180px]">
+                                @if($inv->items->isNotEmpty())
+                                <div class="truncate font-medium text-slate-800" title="{{ $inv->items->pluck('item_description')->join(', ') }}">
+                                    {{ $inv->items->first()->item_description }}
+                                    @if($inv->items->count() > 1)
+                                    <span class="text-[10px] font-bold text-cyan-600">+{{ $inv->items->count() - 1 }} more</span>
+                                    @endif
+                                </div>
+                                @else
+                                <span class="text-slate-400 italic">Hospital Care</span>
+                                @endif
+                            </td>
+                            <td class="py-3.5 px-4 font-extrabold text-slate-900">${{ number_format($inv->net_amount, 2) }}</td>
+                            <td class="py-3.5 px-4 text-emerald-600 font-bold">${{ number_format($inv->paid_amount, 2) }}</td>
+                            <td class="py-3.5 px-4 text-rose-600 font-black">${{ number_format($inv->balance_due, 2) }}</td>
+                            <td class="py-3.5 px-4">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border {{ $inv->status_badge }}">
+                                    {{ ucfirst(str_replace('_', ' ', $inv->status)) }}
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
+                                @if(!Auth::user()->isPatient() && in_array($inv->status, ['unpaid', 'partially_paid', 'checking']))
+                                <a href="{{ route('billing.show', $inv->id) }}" class="px-2.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-[11px] shadow-sm transition inline-block">
+                                    <i class="fa-solid fa-cash-register mr-1"></i> Settle
+                                </a>
+                                @else
+                                <a href="{{ route('billing.show', $inv->id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[11px] transition inline-block">
+                                    View
+                                </a>
+                                @endif
+                                <a href="{{ route('billing.print', $inv->id) }}" target="_blank" class="p-1.5 bg-slate-900 hover:bg-cyan-600 text-white rounded-lg text-[11px] transition inline-block" title="Print Receipt">
+                                    <i class="fa-solid fa-print"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="py-10 text-center text-slate-400">
+                                <i class="fa-solid fa-file-invoice text-3xl mb-2 text-slate-300"></i>
+                                <p class="font-bold text-slate-600 text-xs">No invoices issued for this patient yet.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Payment & Transaction Receipts History Section -->
+            <div class="pt-6 border-t border-slate-200/80">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-cyan-600"></i> Payment & Transaction Receipts History
+                        </h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Individual settled receipts, UPI transaction IDs, card payments, and counter collections</p>
+                    </div>
+                    <span class="px-3 py-1 bg-slate-100 text-slate-700 rounded-full font-bold text-xs">
+                        {{ $patientPayments->count() }} Transactions Recorded
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-slate-100">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200/80">
+                                <th class="py-3 px-4">Receipt #</th>
+                                <th class="py-3 px-4">Invoice #</th>
+                                <th class="py-3 px-4">Date & Time</th>
+                                <th class="py-3 px-4">Payment Method</th>
+                                <th class="py-3 px-4">Txn Ref / Cheque</th>
+                                <th class="py-3 px-4">Amount Paid</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse($patientPayments as $pmt)
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="py-3 px-4 font-mono font-bold text-slate-900">{{ $pmt->payment_number }}</td>
+                                <td class="py-3 px-4 font-mono">
+                                    <a href="{{ route('billing.show', $pmt->invoice_id) }}" class="text-cyan-600 font-bold hover:underline">
+                                        {{ $pmt->invoice->invoice_number }}
+                                    </a>
+                                </td>
+                                <td class="py-3 px-4 text-slate-600">{{ $pmt->payment_date->format('M d, Y - h:i A') }}</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold {{ $pmt->method_badge }}">
+                                        {{ strtoupper(str_replace('_', ' ', $pmt->payment_method)) }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 font-mono text-slate-600">{{ $pmt->transaction_reference ?? '-' }}</td>
+                                <td class="py-3 px-4 font-black text-emerald-600 text-sm">${{ number_format($pmt->amount_paid, 2) }}</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $pmt->status_badge }}">
+                                        {{ ucfirst($pmt->status) }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-right">
+                                    <a href="{{ route('billing.show', $pmt->invoice_id) }}" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[11px] transition inline-block">
+                                        View Bill
+                                    </a>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="8" class="py-8 text-center text-slate-400">
+                                    <i class="fa-solid fa-receipt text-3xl mb-2 text-slate-300"></i>
+                                    <p class="font-semibold text-xs">No payment transaction receipts recorded yet for this patient.</p>
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 

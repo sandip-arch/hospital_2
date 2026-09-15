@@ -113,24 +113,42 @@ class AuthController extends Controller
             $user->roles()->sync([$patientRole->id]);
         }
 
-        // Generate UPI
-        $count = Patient::count() + 1;
-        $upi = 'PAT-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        // Check if an existing patient record exists with this email or phone
+        $existingPatient = Patient::where('email', $validated['email'])
+            ->orWhere('phone', $validated['phone'])
+            ->first();
 
-        Patient::create([
-            'user_id' => $user->id,
-            'patient_code' => $upi,
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
-            'dob' => $validated['dob'],
-            'gender' => $validated['gender'],
-            'blood_type' => $validated['blood_type'] ?? null,
-            'phone' => $validated['phone'],
-            'email' => $validated['email'],
-            'address' => $validated['address'] ?? null,
-        ]);
+        if ($existingPatient) {
+            $existingPatient->update([
+                'user_id' => $user->id,
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'dob' => $validated['dob'],
+                'gender' => $validated['gender'],
+                'blood_type' => $validated['blood_type'] ?? $existingPatient->blood_type,
+                'address' => $validated['address'] ?? $existingPatient->address,
+            ]);
+            $upi = $existingPatient->patient_code;
+        } else {
+            // Generate UPI
+            $count = Patient::count() + 1;
+            $upi = 'PAT-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
 
-        AuditService::log('REGISTER', 'users', $user->id, "New patient {$user->name} registered with UPI {$upi}");
+            Patient::create([
+                'user_id' => $user->id,
+                'patient_code' => $upi,
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'dob' => $validated['dob'],
+                'gender' => $validated['gender'],
+                'blood_type' => $validated['blood_type'] ?? null,
+                'phone' => $validated['phone'],
+                'email' => $validated['email'],
+                'address' => $validated['address'] ?? null,
+            ]);
+        }
+
+        AuditService::log('REGISTER', 'users', $user->id, "Patient account {$user->name} linked to UPI {$upi}");
 
         Auth::login($user);
 

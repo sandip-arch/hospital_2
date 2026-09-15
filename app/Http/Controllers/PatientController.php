@@ -124,6 +124,8 @@ class PatientController extends Controller
             'admissions.doctor.user',
             'invoices.items',
             'invoices.payments',
+            'invoices.appointment.doctor.user',
+            'invoices.appointment.department',
         ])->findOrFail($id);
 
         if ($user->isPatient() && $user->patient?->id !== $patient->id && $patient->user_id !== $user->id) {
