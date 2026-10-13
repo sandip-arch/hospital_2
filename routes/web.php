@@ -22,6 +22,7 @@ use App\Http\Controllers\AmbulanceController;
 use App\Http\Controllers\Admin\AmbulanceAdminController;
 use App\Http\Controllers\AmbulanceComplaintController;
 use App\Http\Controllers\ForgotPasswordController; 
+use App\Http\Controllers\AIController;
 
 /*
 |--------------------------------------------------------------------------
@@ -173,6 +174,25 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/ambulance-complaints/{id}', [AmbulanceComplaintController::class, 'update'])->name('ambulance.complaints.update');
     Route::delete('/ambulance-complaints/{id}', [AmbulanceComplaintController::class, 'destroy'])->name('ambulance.complaints.destroy');
 
+
+    // ============================================================
+    // AI ASSISTANT
+    // ============================================================
+    // The AI assistant is available only to authenticated users.
+    // Laravel authentication determines the actual logged-in user.
+    // The AI controller then passes a trusted, sanitized user
+    // context to the internal Node.js AI server.
+    //
+    // IMPORTANT:
+    // - Do NOT trust role/user information from the browser.
+    // - Authenticated Laravel session is the source of identity.
+    // - AI authorization will be enforced through Laravel.
+    // ============================================================
+
+    Route::post('/ai/chat', [AIController::class, 'chat'])
+        ->name('ai.chat');
+
+        
     // 12. System Administration & RBAC (Superadmin & Admin only)
     Route::middleware(['role:superadmin,admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -204,5 +224,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ambulance-drivers', [AmbulanceAdminController::class, 'drivers'])->name('ambulances.drivers');
         Route::post('/ambulance-drivers', [AmbulanceAdminController::class, 'storeDriver'])->name('ambulances.drivers.store');
         Route::post('/ambulances/sync-gps', [AmbulanceAdminController::class, 'syncFleetGps'])->name('ambulances.syncGps');
+
+
+        
     });
 });
