@@ -3,7 +3,7 @@
 @section('title', 'Patients Directory')
 @section('header_title', 'Patients Master Directory')
 @section('header_subtitle', 'Unique Patient Identification (UPI), demographics, emergency contacts, and medical histories')
-
+<link rel="icon" type="image/png" href="{{ asset('image.png') }}">
 @section('content')
 <div class="space-y-6">
 

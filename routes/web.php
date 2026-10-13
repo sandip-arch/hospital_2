@@ -172,6 +172,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/ambulance-complaints', [AmbulanceComplaintController::class, 'store'])->name('ambulance.complaints.store');
     Route::put('/ambulance-complaints/{id}', [AmbulanceComplaintController::class, 'update'])->name('ambulance.complaints.update');
     Route::delete('/ambulance-complaints/{id}', [AmbulanceComplaintController::class, 'destroy'])->name('ambulance.complaints.destroy');
+ 
+    //12.AI-assiestent chatbot route 
+Route::view('/ai-assistant', 'ai-assistent.ai-assistant')
+    ->middleware('auth')
+    ->name('ai.assistant');
 
     // 12. System Administration & RBAC (Superadmin & Admin only)
     Route::middleware(['role:superadmin,admin'])->prefix('admin')->name('admin.')->group(function () {

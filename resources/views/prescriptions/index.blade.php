@@ -3,7 +3,7 @@
 @section('title', Auth::user()->isPatient() ? 'My Electronic Prescriptions (e-Rx)' : 'Electronic Prescriptions (e-Rx)')
 @section('header_title', Auth::user()->isPatient() ? 'My Medical Prescriptions' : 'e-Prescriptions Directory')
 @section('header_subtitle', Auth::user()->isPatient() ? 'Your doctor-issued medication regimens, dosage schedules, and dispensing status' : 'Digital medicine orders, dosage regimens, duration, and pharmacy fulfillment')
-
+<link rel="icon" type="image/png" href="{{ asset('image.png') }}">
 @section('content')
 <div class="space-y-6">
 

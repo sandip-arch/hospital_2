@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Prescription Slip - Rx #{{ $prescription->id }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('image.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -17,6 +18,7 @@
         
         <div class="flex items-center justify-between no-print mb-8 pb-4 border-b border-slate-200">
             <span class="text-xs text-slate-500 font-bold">Official e-Prescription (Rx) Slip</span>
+            <span></span>
             <button onclick="window.print()" class="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800">
                 Print Rx Slip
             </button>

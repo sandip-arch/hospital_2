@@ -3,6 +3,7 @@
 @section('title', 'Electronic Medical Records (EMR)')
 @section('header_title', 'Clinical Records & EMR')
 @section('header_subtitle', 'Patient diagnoses, clinical observations, vital signs timelines, and consultation notes')
+<link rel="icon" type="image/png" href="{{ asset('image.png') }}">
 
 @section('content')
 <div class="space-y-6">

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Clinical Consultation Summary - {{ $record->patient->patient_code }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{{ asset('image.png') }}">
     <style>
         @media print {
             .no-print { display: none; }
