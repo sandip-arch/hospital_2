@@ -1,4 +1,5 @@
 @auth
+@unless(request()->routeIs('ai.assistant'))
 <!-- ========================================================================= -->
 <!-- 🏥 APEX HORIZON AUTONOMOUS AI ASSISTANT - FLOATING CHAT WIDGET             -->
 <!-- ========================================================================= -->
@@ -55,7 +56,17 @@
             </div>
 
             <!-- Header Controls -->
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1.5">
+                <!-- Voice Dictation / Speaker Toggle Button -->
+                <button type="button" 
+                        id="apex-ai-speaker-toggle" 
+                        onclick="apexAiToggleSpeaker()" 
+                        title="Voice Dictation (Read responses aloud through speaker)" 
+                        class="h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center gap-1.5 text-xs transition border border-white/10">
+                    <i id="apex-ai-speaker-icon" class="fa-solid fa-volume-high text-cyan-300 text-xs"></i>
+                    <span id="apex-ai-speaker-label" class="text-[10px] font-bold text-cyan-200 hidden sm:inline">Voice ON</span>
+                </button>
+
                 <!-- Clear History Button -->
                 <button onclick="apexAiClearChat()" title="Reset Conversation" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center text-xs transition">
                     <i class="fa-solid fa-rotate-right"></i>
@@ -65,6 +76,22 @@
                     <i class="fa-solid fa-minus"></i>
                 </button>
             </div>
+        </div>
+
+        <!-- Speaking Status Banner (Active when AI voice is dictating aloud) -->
+        <div id="apex-ai-speaking-banner" style="display: none;" class="bg-gradient-to-r from-indigo-900 to-cyan-900 text-cyan-100 px-4 py-1.5 items-center justify-between text-xs border-b border-indigo-700/60 transition-all">
+            <div class="flex items-center gap-2">
+                <span class="flex h-2 w-2 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
+                </span>
+                <span class="text-[11px] font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-volume-high text-cyan-300 animate-pulse text-[11px]"></i> Dictating response aloud...
+                </span>
+            </div>
+            <button type="button" onclick="apexAiStopSpeaking()" class="text-[10px] bg-white/15 hover:bg-white/25 text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider transition flex items-center gap-1">
+                <i class="fa-solid fa-circle-stop text-rose-400"></i> Stop Voice
+            </button>
         </div>
 
         <!-- Emergency Quick Banner (For instant crisis access) -->
@@ -121,22 +148,46 @@
 
         <!-- Input Bar & Submission Form -->
         <div class="p-3 bg-white border-t border-slate-200/90">
-            <form id="apex-ai-form" onsubmit="apexAiSubmitMessage(event)" class="relative flex items-center gap-2">
+            <!-- Listening / Recording Indicator -->
+            <div id="apex-ai-mic-indicator" style="display: none;" class="mb-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs items-center justify-between animate-pulse">
+                <span class="flex items-center gap-2 font-semibold text-[11px]">
+                    <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span>
+                    🎙️ Listening... Speak into your microphone (click Mic again to send)
+                </span>
+                <button type="button" onclick="apexAiCancelVoiceRecognition()" class="text-[10px] uppercase font-bold text-rose-700 hover:underline">
+                    Cancel
+                </button>
+            </div>
+
+            <form id="apex-ai-form" onsubmit="apexAiSubmitMessage(event)" class="relative flex items-center gap-1.5">
                 <input type="text" 
                        id="apex-ai-input" 
-                       placeholder="Ask about appointments, medications, beds, ambulances..."
+                       placeholder="Ask questions or tap mic to talk..."
                        autocomplete="off"
-                       class="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-xs text-slate-800 placeholder-slate-400 px-4 py-3 rounded-2xl border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" />
+                       class="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-xs text-slate-800 placeholder-slate-400 pl-4 pr-2 py-3 rounded-2xl border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" />
                 
+                <!-- Microphone Button (Voice Input) -->
+                <button type="button" 
+                        id="apex-ai-mic-btn" 
+                        onclick="apexAiToggleVoiceRecognition()" 
+                        title="Voice Input (Click to speak into microphone)"
+                        class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center shrink-0 border border-slate-200/90 transition transform active:scale-95 shadow-sm">
+                    <i id="apex-ai-mic-icon" class="fa-solid fa-microphone text-xs"></i>
+                </button>
+
+                <!-- Send Button -->
                 <button type="submit" 
-                        id="apex-ai-send-btn"
+                        id="apex-ai-send-btn" 
                         title="Send message"
                         class="w-10 h-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shrink-0 shadow-md transition transform active:scale-95 disabled:opacity-50">
                     <i class="fa-solid fa-paper-plane text-xs"></i>
                 </button>
             </form>
             <div class="mt-1.5 flex items-center justify-between text-[10px] text-slate-400 px-2">
-                <span>Press <kbd class="px-1 py-0.5 rounded bg-slate-100 border text-slate-500">Enter</kbd> to submit</span>
+                <button type="button" onclick="apexAiToggleSpeaker()" class="hover:text-indigo-600 font-semibold cursor-pointer flex items-center gap-1">
+                    <i id="apex-ai-footer-spk-icon" class="fa-solid fa-volume-high text-emerald-500 text-[10px]"></i>
+                    <span id="apex-ai-voice-status-hint" class="text-indigo-600 font-bold">Voice: Active (Speaking)</span>
+                </button>
                 <span>Role: <strong class="text-indigo-600">{{ Auth::user()->primaryRoleDisplay() }}</strong></span>
             </div>
         </div>
@@ -148,6 +199,9 @@
 <script>
     let apexAiConversationId = null;
     let apexAiIsOpen = false;
+    let apexAiRecognition = null;
+    let apexAiIsRecording = false;
+    let apexAiSpeakerActive = localStorage.getItem('apex_ai_voice_dictation') !== 'false'; // Default to active
 
     // Toggle widget modal visibility
     function apexAiToggleWidget() {
@@ -163,6 +217,8 @@
         } else {
             win.classList.add('hidden');
             launcher.classList.remove('hidden');
+            apexAiStopSpeaking();
+            apexAiStopVoiceRecognition();
         }
     }
 
@@ -203,6 +259,10 @@
     async function apexAiSubmitMessage(e) {
         if (e && e.preventDefault) e.preventDefault();
         
+        // Interrupt ongoing speech and stop active recording
+        apexAiStopSpeaking();
+        apexAiStopVoiceRecognition();
+
         const input = document.getElementById('apex-ai-input');
         const text = input.value.trim();
         if (!text) return;
@@ -241,6 +301,8 @@
 
             if (data.message) {
                 apexAiAppendBubble('model', data.message, data.tool_executed, data.tool_result);
+                // Dictate generated response aloud through speaker if active
+                apexAiSpeak(data.message);
             } else {
                 apexAiAppendBubble('model', 'I could not process that request. Please try again or reach the emergency desk.');
             }
@@ -251,6 +313,220 @@
             apexAiAppendBubble('model', 'Network disruption encountered. Please verify your connection or refresh the page.');
             console.error('AI chat error:', err);
         }
+    }
+
+    // ==========================================
+    // VOICE RECOGNITION (SPEECH-TO-TEXT) LOGIC
+    // ==========================================
+    function apexAiInitVoice() {
+        const SpeechRecClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecClass) {
+            apexAiRecognition = new SpeechRecClass();
+            apexAiRecognition.continuous = false;
+            apexAiRecognition.interimResults = true;
+            apexAiRecognition.lang = 'en-US';
+
+            apexAiRecognition.onstart = function() {
+                apexAiIsRecording = true;
+                apexAiUpdateMicUI(true);
+            };
+
+            apexAiRecognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    transcript += event.results[i][0].transcript;
+                }
+                const input = document.getElementById('apex-ai-input');
+                if (input && transcript) {
+                    input.value = transcript;
+                }
+            };
+
+            apexAiRecognition.onerror = function(event) {
+                console.warn('Speech recognition error:', event.error);
+                apexAiStopVoiceRecognition();
+                if (event.error === 'not-allowed') {
+                    alert('Microphone permission denied. Please allow microphone access in your browser to talk with AI.');
+                }
+            };
+
+            apexAiRecognition.onend = function() {
+                apexAiIsRecording = false;
+                apexAiUpdateMicUI(false);
+                const input = document.getElementById('apex-ai-input');
+                if (input && input.value.trim().length > 0) {
+                    apexAiSubmitMessage(new Event('submit'));
+                }
+            };
+        }
+
+        apexAiUpdateSpeakerUI();
+    }
+
+    function apexAiToggleVoiceRecognition() {
+        if (!apexAiRecognition) {
+            alert('Speech recognition is not supported in this browser. Please use Google Chrome, Edge, or Safari.');
+            return;
+        }
+
+        apexAiStopSpeaking();
+
+        if (apexAiIsRecording) {
+            apexAiStopVoiceRecognition();
+        } else {
+            try {
+                apexAiRecognition.start();
+            } catch (err) {
+                console.warn('Could not start recognition:', err);
+            }
+        }
+    }
+
+    function apexAiStopVoiceRecognition() {
+        if (apexAiRecognition && apexAiIsRecording) {
+            try {
+                apexAiRecognition.stop();
+            } catch (e) {}
+        }
+        apexAiIsRecording = false;
+        apexAiUpdateMicUI(false);
+    }
+
+    function apexAiCancelVoiceRecognition() {
+        const input = document.getElementById('apex-ai-input');
+        if (input) input.value = '';
+        apexAiStopVoiceRecognition();
+    }
+
+    function apexAiUpdateMicUI(isRecording) {
+        const btn = document.getElementById('apex-ai-mic-btn');
+        const icon = document.getElementById('apex-ai-mic-icon');
+        const indicator = document.getElementById('apex-ai-mic-indicator');
+
+        if (isRecording) {
+            if (btn) {
+                btn.className = 'w-10 h-10 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shrink-0 shadow-md transition transform active:scale-95 animate-pulse border border-rose-700';
+                btn.title = 'Listening... Click to finish and send';
+            }
+            if (icon) icon.className = 'fa-solid fa-stop text-xs';
+            if (indicator) indicator.style.display = 'flex';
+        } else {
+            if (btn) {
+                btn.className = 'w-10 h-10 rounded-2xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center shrink-0 border border-slate-200/90 transition transform active:scale-95 shadow-sm';
+                btn.title = 'Voice Input (Click to speak into microphone)';
+            }
+            if (icon) icon.className = 'fa-solid fa-microphone text-xs';
+            if (indicator) indicator.style.display = 'none';
+        }
+    }
+
+    // ==========================================
+    // VOICE DICTATION (SPEAKER / TTS) LOGIC
+    // ==========================================
+    function apexAiToggleSpeaker() {
+        apexAiSpeakerActive = !apexAiSpeakerActive;
+        localStorage.setItem('apex_ai_voice_dictation', apexAiSpeakerActive ? 'true' : 'false');
+        if (!apexAiSpeakerActive) {
+            apexAiStopSpeaking();
+        }
+        apexAiUpdateSpeakerUI();
+    }
+
+    function apexAiUpdateSpeakerUI() {
+        const icon = document.getElementById('apex-ai-speaker-icon');
+        const label = document.getElementById('apex-ai-speaker-label');
+        const footerIcon = document.getElementById('apex-ai-footer-spk-icon');
+        const footerHint = document.getElementById('apex-ai-voice-status-hint');
+        const btn = document.getElementById('apex-ai-speaker-toggle');
+
+        if (apexAiSpeakerActive) {
+            if (icon) icon.className = 'fa-solid fa-volume-high text-cyan-300 text-xs';
+            if (label) {
+                label.textContent = 'Voice ON';
+                label.className = 'text-[10px] font-bold text-cyan-200 hidden sm:inline';
+            }
+            if (footerIcon) footerIcon.className = 'fa-solid fa-volume-high text-emerald-500 text-[10px]';
+            if (footerHint) {
+                footerHint.textContent = 'Voice: Active (Speaking)';
+                footerHint.className = 'text-indigo-600 font-bold';
+            }
+            if (btn) btn.title = 'Voice Dictation is Active. Click to Mute.';
+        } else {
+            if (icon) icon.className = 'fa-solid fa-volume-xmark text-slate-400 text-xs';
+            if (label) {
+                label.textContent = 'Voice Muted';
+                label.className = 'text-[10px] font-bold text-slate-400 hidden sm:inline';
+            }
+            if (footerIcon) footerIcon.className = 'fa-solid fa-volume-xmark text-slate-400 text-[10px]';
+            if (footerHint) {
+                footerHint.textContent = 'Voice: Muted (Chat only)';
+                footerHint.className = 'text-slate-500 font-bold';
+            }
+            if (btn) btn.title = 'Voice Dictation is Muted. Click to Turn ON.';
+        }
+    }
+
+    function apexAiSpeak(rawText) {
+        if (!apexAiSpeakerActive || !('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel();
+
+        // Strip markdown and URLs for natural speech
+        let speakable = rawText
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            .replace(/\*\*([^*]+)\*\*/g, '$1')
+            .replace(/\*([^*]+)\*/g, '$1')
+            .replace(/#+\s*/g, '')
+            .replace(/https?:\/\/\S+/g, '')
+            .replace(/[•\-\*]\s+/g, ', ')
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        if (!speakable) return;
+
+        const utterance = new SpeechSynthesisUtterance(speakable);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.lang = 'en-US';
+
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            const preferred = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('English')));
+            if (preferred) utterance.voice = preferred;
+        }
+
+        const banner = document.getElementById('apex-ai-speaking-banner');
+
+        utterance.onstart = function() {
+            if (banner) banner.style.display = 'flex';
+        };
+
+        utterance.onend = function() {
+            if (banner) banner.style.display = 'none';
+        };
+
+        utterance.onerror = function(e) {
+            console.warn('SpeechSynthesis error:', e);
+            if (banner) banner.style.display = 'none';
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function apexAiStopSpeaking() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        const banner = document.getElementById('apex-ai-speaking-banner');
+        if (banner) banner.style.display = 'none';
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', apexAiInitVoice);
+    } else {
+        apexAiInitVoice();
     }
 
     // Reset current conversation
@@ -351,4 +627,5 @@
             .replace(/'/g, "&#039;");
     }
 </script>
+@endunless
 @endauth

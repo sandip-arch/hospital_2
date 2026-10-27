@@ -472,6 +472,39 @@
         cursor: not-allowed;
     }
 
+    .ai-mic {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        color: #475569;
+        font-size: 16px;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 11px;
+        cursor: pointer;
+        transition: background .2s, color .2s, transform .1s;
+    }
+
+    .ai-mic:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+
+    .ai-mic.recording {
+        background: #ef4444 !important;
+        color: #ffffff !important;
+        border-color: #dc2626 !important;
+        animation: aiMicPulse 1.2s infinite ease-in-out;
+    }
+
+    @keyframes aiMicPulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+        50% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+
     .ai-disclaimer {
         margin: 10px 0 0;
         color: #94a3b8;
@@ -642,6 +675,10 @@
                 </div>
 
                 <div class="ai-header-actions">
+                    <button type="button" class="ai-header-btn" id="aiVoiceToggle" title="Toggle voice dictation (read responses aloud)">
+                        <span id="aiVoiceIcon">🔊</span>
+                        <span id="aiVoiceStatus">Voice ON</span>
+                    </button>
                     <button type="button" class="ai-header-btn" id="aiClearChat">
                         Clear chat
                     </button>
@@ -701,14 +738,34 @@
 
             {{-- Message composer --}}
             <div class="ai-composer-area">
-                <form class="ai-composer" id="aiChatForm">
+                <!-- Voice Status / Listening Indicator -->
+                <div id="aiVoiceIndicator" style="display:none; margin-bottom:8px; padding:6px 12px; background:#fff1f2; border:1px solid #fecdd3; border-radius:10px; color:#e11d48; font-size:12px; font-weight:600; align-items:center; justify-content:space-between;">
+                    <span>🎙️ Listening... Speak into your microphone (click Mic again to send)</span>
+                    <button type="button" id="aiCancelVoiceBtn" style="background:transparent; border:0; color:#e11d48; cursor:pointer; font-size:11px; font-weight:700; text-transform:uppercase;">Cancel</button>
+                </div>
+
+                <!-- Speaking Aloud Banner -->
+                <div id="aiSpeakingBanner" style="display:none; margin-bottom:8px; padding:6px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; color:#1d4ed8; font-size:12px; font-weight:600; align-items:center; justify-content:space-between;">
+                    <span>🔊 Reading response aloud through speaker...</span>
+                    <button type="button" id="aiStopSpeakingBtn" style="background:#dbeafe; border:0; color:#1d4ed8; border-radius:6px; padding:2px 8px; cursor:pointer; font-size:10px; font-weight:700; text-transform:uppercase;">Stop Voice</button>
+                </div>
+
+                <form class="ai-composer" id="aiChatForm" style="display:flex; gap:8px; align-items:flex-end;">
                     <textarea
                         id="aiChatInput"
                         rows="1"
                         maxlength="2000"
-                        placeholder="Ask your hospital assistant a question..."
+                        placeholder="Ask your hospital assistant a question or click the mic to talk..."
                         aria-label="Type your message"
                         required></textarea>
+
+                    <button type="button"
+                            class="ai-mic"
+                            id="aiMicButton"
+                            title="Speak to Assistant (Voice Input)"
+                            aria-label="Speak into microphone">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
 
                     <button type="submit"
                             class="ai-send"
@@ -719,8 +776,7 @@
                 </form>
 
                 <p class="ai-disclaimer">
-                    Demo assistant only. Do not enter real patient details or
-                    confidential medical information. Responses are not medical advice.
+                    Hospital AI Clinical Assistant. Responses are generated with AI and clinical database tools.
                 </p>
             </div>
         </main>
@@ -840,12 +896,17 @@
         return 'Thanks for your question. This assistant is currently running in demo mode, so it does not use a real AI model or read your hospital database. To answer your question intelligently, the next step is to connect this page to a Laravel backend endpoint and configure an AI service securely.';
     }
 
-    function submitQuestion(question) {
+    let currentConversationId = null;
+
+    async function submitQuestion(question) {
         const cleaned = question.trim();
 
         if (!cleaned || sendButton.disabled) {
             return;
         }
+
+        stopSpeaking();
+        stopVoiceRecognition();
 
         if (welcome && welcome.isConnected) {
             welcome.remove();
@@ -859,17 +920,45 @@
         const typing = showTyping();
         messages.scrollTop = messages.scrollHeight;
 
-        // Demo response only: no API request is made.
-        window.setTimeout(function () {
+        try {
+            const res = await fetch("{{ route('ai.chat') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    message: cleaned,
+                    conversation_id: currentConversationId
+                })
+            });
+
+            const data = await res.json();
             if (typing.isConnected) {
                 typing.remove();
             }
 
-            addMessage(demoReply(cleaned), 'assistant');
+            if (data.conversation_id) {
+                currentConversationId = data.conversation_id;
+            }
+
+            const reply = data.message || 'I could not process that request. Please try again.';
+            addMessage(reply, 'assistant');
+            // Dictate response aloud through speaker if active
+            speakResponse(reply);
+
+        } catch (err) {
+            if (typing.isConnected) {
+                typing.remove();
+            }
+            addMessage('Network error communicating with AI assistant. Please try again.', 'assistant');
+            console.error('AI error:', err);
+        } finally {
             sendButton.disabled = false;
             input.focus();
             messages.scrollTop = messages.scrollHeight;
-        }, 500);
+        }
     }
 
     form.addEventListener('submit', function (event) {
@@ -900,6 +989,9 @@
     });
 
     function resetChat() {
+        stopSpeaking();
+        stopVoiceRecognition();
+        currentConversationId = null;
         messages.replaceChildren();
 
         const intro = document.createElement('div');
@@ -914,7 +1006,7 @@
         heading.textContent = 'How can I help you today?';
 
         const paragraph = document.createElement('p');
-        paragraph.textContent = 'Your demo conversation has been cleared. Ask a new question to get started.';
+        paragraph.textContent = 'Conversation has been cleared. Ask a question or click the microphone to talk.';
 
         intro.appendChild(symbol);
         intro.appendChild(heading);
@@ -929,6 +1021,207 @@
 
     newChatButton.addEventListener('click', resetChat);
     clearChatButton.addEventListener('click', resetChat);
+
+    // ==========================================
+    // VOICE RECOGNITION (SPEECH-TO-TEXT) & TTS
+    // ==========================================
+    const micButton = document.getElementById('aiMicButton');
+    const voiceIndicator = document.getElementById('aiVoiceIndicator');
+    const cancelVoiceBtn = document.getElementById('aiCancelVoiceBtn');
+    const voiceToggleBtn = document.getElementById('aiVoiceToggle');
+    const voiceIcon = document.getElementById('aiVoiceIcon');
+    const voiceStatus = document.getElementById('aiVoiceStatus');
+    const speakingBanner = document.getElementById('aiSpeakingBanner');
+    const stopSpeakingBtn = document.getElementById('aiStopSpeakingBtn');
+
+    let recognition = null;
+    let isRecording = false;
+    let speakerActive = localStorage.getItem('apex_ai_voice_dictation') !== 'false'; // default ON
+
+    const SpeechRecClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecClass) {
+        recognition = new SpeechRecClass();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = function () {
+            isRecording = true;
+            updateMicUI(true);
+        };
+
+        recognition.onresult = function (event) {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript;
+            }
+            if (transcript) {
+                input.value = transcript;
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            }
+        };
+
+        recognition.onerror = function (event) {
+            console.warn('Speech recognition error:', event.error);
+            stopVoiceRecognition();
+            if (event.error === 'not-allowed') {
+                alert('Microphone permission was denied. Please allow microphone access in your browser settings.');
+            }
+        };
+
+        recognition.onend = function () {
+            isRecording = false;
+            updateMicUI(false);
+            if (input.value.trim().length > 0) {
+                submitQuestion(input.value);
+            }
+        };
+    }
+
+    function toggleVoiceRecognition() {
+        if (!recognition) {
+            alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+
+        stopSpeaking();
+
+        if (isRecording) {
+            stopVoiceRecognition();
+        } else {
+            try {
+                recognition.start();
+            } catch (err) {
+                console.warn('Recognition start error:', err);
+            }
+        }
+    }
+
+    function stopVoiceRecognition() {
+        if (recognition && isRecording) {
+            try {
+                recognition.stop();
+            } catch (e) {}
+        }
+        isRecording = false;
+        updateMicUI(false);
+    }
+
+    function updateMicUI(recording) {
+        if (!micButton) return;
+        if (recording) {
+            micButton.classList.add('recording');
+            micButton.innerHTML = '<i class="fa-solid fa-stop"></i>';
+            micButton.title = 'Listening... Click to finish and send';
+            if (voiceIndicator) voiceIndicator.style.display = 'flex';
+        } else {
+            micButton.classList.remove('recording');
+            micButton.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            micButton.title = 'Speak to Assistant (Voice Input)';
+            if (voiceIndicator) voiceIndicator.style.display = 'none';
+        }
+    }
+
+    if (micButton) {
+        micButton.addEventListener('click', toggleVoiceRecognition);
+    }
+
+    if (cancelVoiceBtn) {
+        cancelVoiceBtn.addEventListener('click', function () {
+            input.value = '';
+            stopVoiceRecognition();
+        });
+    }
+
+    // Voice Dictation (Speaker)
+    function updateSpeakerToggleUI() {
+        if (speakerActive) {
+            if (voiceIcon) voiceIcon.textContent = '🔊';
+            if (voiceStatus) voiceStatus.textContent = 'Voice ON';
+            if (voiceToggleBtn) {
+                voiceToggleBtn.title = 'Voice Dictation is Active. Click to Mute.';
+                voiceToggleBtn.style.color = '#2563eb';
+            }
+        } else {
+            if (voiceIcon) voiceIcon.textContent = '🔇';
+            if (voiceStatus) voiceStatus.textContent = 'Voice Muted';
+            if (voiceToggleBtn) {
+                voiceToggleBtn.title = 'Voice Dictation is Muted. Click to Turn ON.';
+                voiceToggleBtn.style.color = '#64748b';
+            }
+        }
+    }
+
+    if (voiceToggleBtn) {
+        voiceToggleBtn.addEventListener('click', function () {
+            speakerActive = !speakerActive;
+            localStorage.setItem('apex_ai_voice_dictation', speakerActive ? 'true' : 'false');
+            if (!speakerActive) {
+                stopSpeaking();
+            }
+            updateSpeakerToggleUI();
+        });
+    }
+
+    function speakResponse(rawText) {
+        if (!speakerActive || !('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel();
+
+        let speakable = rawText
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            .replace(/\*\*([^*]+)\*\*/g, '$1')
+            .replace(/\*([^*]+)\*/g, '$1')
+            .replace(/#+\s*/g, '')
+            .replace(/https?:\/\/\S+/g, '')
+            .replace(/[•\-\*]\s+/g, ', ')
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        if (!speakable) return;
+
+        const utterance = new SpeechSynthesisUtterance(speakable);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.lang = 'en-US';
+
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            const preferred = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('English')));
+            if (preferred) utterance.voice = preferred;
+        }
+
+        utterance.onstart = function () {
+            if (speakingBanner) speakingBanner.style.display = 'flex';
+        };
+
+        utterance.onend = function () {
+            if (speakingBanner) speakingBanner.style.display = 'none';
+        };
+
+        utterance.onerror = function (e) {
+            console.warn('SpeechSynthesis error:', e);
+            if (speakingBanner) speakingBanner.style.display = 'none';
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function stopSpeaking() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        if (speakingBanner) speakingBanner.style.display = 'none';
+    }
+
+    if (stopSpeakingBtn) {
+        stopSpeakingBtn.addEventListener('click', stopSpeaking);
+    }
+
+    updateSpeakerToggleUI();
 })();
 </script>
 

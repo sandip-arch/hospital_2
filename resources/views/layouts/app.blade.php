@@ -204,134 +204,6 @@
 
 
 
-    #ai-chat-launcher {
-
-        position: fixed;
-
-        right: 26px;
-
-        bottom: 26px;
-
-        z-index: 99999;
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 12px;
-
-        padding: 10px 19px 10px 10px;
-
-        border: 1px solid rgba(255,255,255,.25);
-
-        border-radius: 50px;
-
-        background: linear-gradient(135deg, #10b9d4, #087ba5);
-
-        color: #fff;
-
-        font-family: inherit;
-
-        cursor: pointer;
-
-        box-shadow: 0 8px 28px rgba(8, 125, 165, .3);
-
-        transition: transform .2s, box-shadow .2s;
-
-    }
-
-
-
-    #ai-chat-launcher:hover {
-
-        transform: translateY(-3px);
-
-        box-shadow: 0 12px 32px rgba(8, 125, 165, .4);
-
-    }
-
-
-
-    .ai-chat-icon {
-
-        width: 43px;
-
-        height: 43px;
-
-        display: grid;
-
-        place-items: center;
-
-        border-radius: 50%;
-
-        background: rgba(255,255,255,.2);
-
-        font-size: 24px;
-
-    }
-
-
-
-    .ai-chat-label {
-
-        display: flex;
-
-        flex-direction: column;
-
-        gap: 4px;
-
-        align-items: flex-start;
-
-        font-size: 14px;
-
-        font-weight: 700;
-
-    }
-
-
-
-    .ai-chat-subtitle {
-
-        font-size: 11px;
-
-        font-weight: 400;
-
-        opacity: .95;
-
-    }
-
-
-
-    .ai-chat-dot {
-
-        display: inline-block;
-
-        width: 7px;
-
-        height: 7px;
-
-        margin-right: 4px;
-
-        border-radius: 50%;
-
-        background: #8bffbd;
-
-    }
-
-
-
-    @media (max-width: 480px) {
-
-        #ai-chat-launcher {
-
-            right: 14px;
-
-            bottom: 16px;
-
-        }
-
-    }
-
     </style>
 
     @stack('styles')
@@ -1026,34 +898,13 @@
             @yield('content')
 
 
-<<<<<<< HEAD
-
         </main>
 
     </div>
-=======
+
     @include('components.ai-chat-widget')
 
->>>>>>> afc0cce (added rag system to automate the site)
     @stack('scripts')
-
-    {{-- Global AI Assistant Launcher --}}
-    @auth
-        @unless(request()->routeIs('ai.assistant'))
-            <a href="{{ route('ai.assistant') }}"
-               id="ai-chat-launcher"
-               aria-label="Open AI Hospital Assistant">
-                <span class="ai-chat-icon" aria-hidden="true">✦</span>
-                <span class="ai-chat-label">
-                    <span>Let's Chat</span>
-                    <span class="ai-chat-subtitle">
-                        <span class="ai-chat-dot"></span>
-                        AI Hospital Assistant
-                    </span>
-                </span>
-            </a>
-        @endunless
-    @endauth
 
 </body>
 </html>
