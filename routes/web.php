@@ -211,3 +211,5 @@ Route::view('/ai-assistant', 'ai-assistent.ai-assistant')
         Route::post('/ambulances/sync-gps', [AmbulanceAdminController::class, 'syncFleetGps'])->name('ambulances.syncGps');
     });
 });
+
+require __DIR__ . '/ai.php';

@@ -1026,10 +1026,15 @@
             @yield('content')
 
 
+<<<<<<< HEAD
 
         </main>
 
     </div>
+=======
+    @include('components.ai-chat-widget')
+
+>>>>>>> afc0cce (added rag system to automate the site)
     @stack('scripts')
 
     {{-- Global AI Assistant Launcher --}}
