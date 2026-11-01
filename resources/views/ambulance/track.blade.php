@@ -205,21 +205,21 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="text-xs text-slate-500">Plate Number</div>
-                        <div class="text-base font-extrabold text-slate-900 font-mono">{{ $booking->ambulance->vehicle_number }}</div>
+                        <div class="text-base font-extrabold text-slate-900 font-mono">{{ $booking->ambulance?->vehicle_number ?? 'Assigned Unit' }}</div>
                     </div>
-                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full border {{ $booking->ambulance->typeBadge() }}">
-                        {{ $booking->ambulance->typeDisplay() }}
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full border {{ $booking->ambulance?->typeBadge() ?? 'bg-slate-100 text-slate-700' }}">
+                        {{ $booking->ambulance?->typeDisplay() ?? 'Ambulance' }}
                     </span>
                 </div>
 
                 <div class="pt-2 border-t border-slate-100 text-xs space-y-1.5">
                     <div class="flex justify-between text-slate-600">
                         <span>Model:</span>
-                        <span class="font-bold text-slate-800">{{ $booking->ambulance->model }}</span>
+                        <span class="font-bold text-slate-800">{{ $booking->ambulance?->model ?? 'Emergency Response Vehicle' }}</span>
                     </div>
                     <div class="flex justify-between text-slate-600">
                         <span>Equipment:</span>
-                        <span class="font-bold text-emerald-600">Defibrillator, $O_2$, Telemetry</span>
+                        <span class="font-bold text-emerald-600">Defibrillator, O2, Telemetry</span>
                     </div>
                 </div>
             </div>
@@ -271,8 +271,8 @@
         const pickupCoords = [{{ $booking->pickup_latitude }}, {{ $booking->pickup_longitude }}];
         const hospitalCoords = [{{ $hospital['lat'] }}, {{ $hospital['lng'] }}];
         let ambulanceCoords = [
-            {{ $booking->ambulance->current_latitude ?? $hospital['lat'] }}, 
-            {{ $booking->ambulance->current_longitude ?? $hospital['lng'] }}
+            {{ $booking->ambulance?->current_latitude ?? $hospital['lat'] }}, 
+            {{ $booking->ambulance?->current_longitude ?? $hospital['lng'] }}
         ];
 
         // 1. Initialize Leaflet Map

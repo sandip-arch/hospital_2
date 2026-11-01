@@ -24,12 +24,19 @@
 
         <!-- Header -->
         <div class="flex items-center justify-between pb-6 border-b-2 border-slate-900">
-            <div>
-                <h1 class="text-2xl font-black text-slate-900">{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon Medical Center' }}</h1>
-                <p class="text-xs text-slate-500">{{ $hospitalSettings['hospital_address'] ?? '500 Health Sciences Blvd, Boston MA 02115' }} &bull; Phone: {{ $hospitalSettings['hospital_phone'] ?? '+1 (800) 555-APEX' }}</p>
-                <p class="text-xs text-cyan-700 font-bold uppercase tracking-wider mt-1">Hospital Inpatient & Outpatient Invoicing Desk</p>
+            <div class="flex items-center gap-4">
+                @if(!empty($hospitalSettings['hospital_logo']))
+                <img src="{{ Str::startsWith($hospitalSettings['hospital_logo'], 'http') ? $hospitalSettings['hospital_logo'] : asset($hospitalSettings['hospital_logo']) }}" 
+                     alt="{{ $hospitalSettings['hospital_name'] ?? 'Hospital' }}" 
+                     class="h-16 w-auto max-w-[120px] object-contain shrink-0">
+                @endif
+                <div>
+                    <h1 class="text-2xl font-black text-slate-900">{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon Medical Center' }}</h1>
+                    <p class="text-xs text-slate-500">{{ $hospitalSettings['hospital_address'] ?? '500 Health Sciences Blvd, Boston MA 02115' }} &bull; Phone: {{ $hospitalSettings['hospital_phone'] ?? '+1 (800) 555-APEX' }}</p>
+                    <p class="text-xs text-cyan-700 font-bold uppercase tracking-wider mt-1">Hospital Inpatient & Outpatient Invoicing Desk</p>
+                </div>
             </div>
-            <div class="text-right">
+            <div class="text-right shrink-0">
                 <span class="text-xs text-slate-400 block uppercase font-bold">Tax Invoice</span>
                 <span class="text-lg font-mono font-black text-slate-900">{{ $invoice->invoice_number }}</span>
             </div>

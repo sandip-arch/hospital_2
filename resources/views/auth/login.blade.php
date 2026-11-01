@@ -16,12 +16,18 @@ input[type="password"]::-ms-clear {
         <div class="w-full">
             <!-- Branding -->
             <div class="flex items-center gap-3.5 mb-8">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
+                @if(!empty($hospitalSettings['hospital_logo']))
+                <img src="{{ Str::startsWith($hospitalSettings['hospital_logo'], 'http') ? $hospitalSettings['hospital_logo'] : asset($hospitalSettings['hospital_logo']) }}" 
+                     alt="{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}"
+                     class="w-12 h-12 rounded-2xl object-contain bg-slate-50 p-1 border border-cyan-200 shadow-md shrink-0">
+                @else
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30 shrink-0">
                     <i class="fa-solid fa-hospital text-2xl"></i>
                 </div>
+                @endif
                 <div>
-                    <h2 class="font-heading font-extrabold text-slate-900 text-xl leading-tight">Apex Horizon</h2>
-                    <p class="text-[11px] text-cyan-600 font-bold uppercase tracking-wider">Medical Center Portal</p>
+                    <h2 class="font-heading font-extrabold text-slate-900 text-xl leading-tight">{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}</h2>
+                    <p class="text-[11px] text-cyan-600 font-bold uppercase tracking-wider">{{ $hospitalSettings['hospital_phone'] ?? 'Medical Center Portal' }}</p>
                 </div>
             </div>
 

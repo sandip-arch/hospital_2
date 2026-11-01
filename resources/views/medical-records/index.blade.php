@@ -27,7 +27,7 @@
     </div>
 
     <!-- Records Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-live-results>
         @forelse($records as $rec)
         <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-cyan-500/50 transition flex flex-col justify-between">
             <div class="space-y-3">

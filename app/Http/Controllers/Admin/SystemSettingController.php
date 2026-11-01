@@ -26,6 +26,8 @@ class SystemSettingController extends Controller
             'hospital_phone' => 'required|string|max:50',
             'hospital_email' => 'required|email|max:100',
             'hospital_address' => 'required|string|max:255',
+            'hospital_logo' => 'nullable|string|max:500',
+            'hospital_logo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             'hospital_latitude' => 'nullable|numeric|between:-90,90',
             'hospital_longitude' => 'nullable|numeric|between:-180,180',
             'tax_rate_percent' => 'required|numeric|min:0|max:100',
@@ -35,9 +37,25 @@ class SystemSettingController extends Controller
             'custom_settings' => 'nullable|array',
         ]);
 
+        // Handle hospital logo upload
+        if ($request->hasFile('hospital_logo_file')) {
+            $file = $request->file('hospital_logo_file');
+            $filename = 'hospital_logo_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $destinationPath = public_path('uploads/branding');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $file->move($destinationPath, $filename);
+            SystemSetting::set('hospital_logo', '/uploads/branding/' . $filename);
+        } elseif ($request->filled('hospital_logo')) {
+            SystemSetting::set('hospital_logo', $request->input('hospital_logo'));
+        } elseif ($request->has('remove_logo') && $request->input('remove_logo') == '1') {
+            SystemSetting::set('hospital_logo', '');
+        }
+
         // Save primary settings
         foreach ($validated as $key => $value) {
-            if ($key !== 'custom_settings') {
+            if (!in_array($key, ['custom_settings', 'hospital_logo_file', 'hospital_logo'])) {
                 SystemSetting::set($key, $value);
             }
         }

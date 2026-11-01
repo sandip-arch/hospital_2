@@ -634,19 +634,42 @@
             updateAmbulanceDistances();
         }
 
+        // Fallback to IP or Hospital coordinates if device GPS fails/blocked
+        function fallbackLocation(reason = 'GPS Unavailable') {
+            document.getElementById('gpsStatusBadge').className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1';
+            document.getElementById('gpsStatusBadge').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> ' + reason;
+            document.getElementById('gpsAddressText').textContent = 'Defaulted to {{ $hospital['name'] }} (Click anywhere on map to pin your location)';
+            
+            // Try IP-based location as secondary option
+            fetch('https://ipapi.co/json/')
+                .then(r => r.json())
+                .then(ipData => {
+                    if (ipData && ipData.latitude && ipData.longitude) {
+                        setUserLocation(ipData.latitude, ipData.longitude);
+                        document.getElementById('gpsAddressText').textContent = `📍 Approximate Area: ${ipData.city || ''}, ${ipData.region || ''} (Click map to refine)`;
+                    } else {
+                        setUserLocation(hospitalCoords[0], hospitalCoords[1]);
+                    }
+                })
+                .catch(() => {
+                    setUserLocation(hospitalCoords[0], hospitalCoords[1]);
+                });
+        }
+
         // Detect GPS Position function
         function detectDeviceLocation() {
             const btn = document.getElementById('btnDetectGps');
             const btnText = document.getElementById('btnDetectGpsText');
 
             if (!navigator.geolocation) {
-                document.getElementById('gpsAddressText').textContent = 'Geolocation is not supported by your browser.';
+                fallbackLocation('No GPS Support');
                 return;
             }
 
             btnText.textContent = 'Acquiring GPS...';
             btn.disabled = true;
 
+            // First attempt with standard accuracy (avoids GPS hardware timeouts on Windows laptops)
             navigator.geolocation.getCurrentPosition(
                 function (pos) {
                     setUserLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
@@ -654,17 +677,15 @@
                     btn.disabled = false;
                 },
                 function (err) {
-                    console.warn('Geolocation warning:', err.message);
-                    document.getElementById('gpsStatusBadge').className = 'px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1';
-                    document.getElementById('gpsStatusBadge').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> GPS Permission Needed';
-                    document.getElementById('gpsAddressText').textContent = 'Please allow location permission or click map to set location.';
-                    btnText.textContent = 'Retry Detect GPS';
+                    console.warn('Standard geolocation failed, falling back:', err.message);
+                    btnText.textContent = 'Detect My GPS';
                     btn.disabled = false;
+                    fallbackLocation(err.code === 1 ? 'Permission Needed' : 'Using Hospital Anchor');
                 },
                 {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 30000
+                    enableHighAccuracy: false,
+                    timeout: 7000,
+                    maximumAge: 60000
                 }
             );
         }

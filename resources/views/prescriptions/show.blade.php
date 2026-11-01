@@ -30,10 +30,17 @@
     <div class="bg-white rounded-3xl p-6 lg:p-8 border border-slate-200/80 shadow-sm space-y-6">
         
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-            <div>
-                <span class="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">Official Medical Prescription</span>
-                <h3 class="text-2xl font-black text-slate-900 mt-1">Rx #{{ $prescription->id }}</h3>
-                <p class="text-xs text-slate-500 mt-1">Prescribed on {{ $prescription->prescribed_date->format('l, F d, Y') }}</p>
+            <div class="flex items-center gap-4">
+                @if(!empty($hospitalSettings['hospital_logo']))
+                <img src="{{ Str::startsWith($hospitalSettings['hospital_logo'], 'http') ? $hospitalSettings['hospital_logo'] : asset($hospitalSettings['hospital_logo']) }}" 
+                     alt="{{ $hospitalSettings['hospital_name'] ?? 'Hospital' }}" 
+                     class="h-14 w-auto max-w-[100px] object-contain shrink-0">
+                @endif
+                <div>
+                    <span class="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">Official Medical Prescription</span>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">Rx #{{ $prescription->id }}</h3>
+                    <p class="text-xs text-slate-500 mt-1">Prescribed on {{ $prescription->prescribed_date->format('l, F d, Y') }}</p>
+                </div>
             </div>
             <div class="text-right">
                 <span class="px-3 py-1 rounded-full text-xs font-bold border {{ $prescription->status_badge }}">

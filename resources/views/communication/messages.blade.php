@@ -88,17 +88,30 @@
         </div>
 
         <!-- Messages History Stream -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/30">
+        <div id="chatMessagesStream" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/30">
             @forelse($messages as $msg)
             @php $isMe = $msg->sender_id === Auth::id(); @endphp
-            <div class="flex flex-col {{ $isMe ? 'items-end' : 'items-start' }}">
+            <div class="flex flex-col {{ $isMe ? 'items-end' : 'items-start' }} message-item" data-message-id="{{ $msg->id }}" data-is-me="{{ $isMe ? '1' : '0' }}">
                 <div class="max-w-md p-4 rounded-2xl text-xs leading-relaxed {{ $isMe ? 'bg-cyan-600 text-white rounded-br-none shadow-md shadow-cyan-600/20' : 'bg-white border border-slate-200/80 text-slate-800 rounded-bl-none shadow-xs' }}">
                     {{ $msg->message_body }}
                 </div>
-                <span class="text-[10px] text-slate-400 mt-1 px-1">{{ $msg->sent_at->format('h:i A') }}</span>
+                <div class="flex items-center gap-1.5 mt-1 px-1 text-[10px] text-slate-400">
+                    <span>{{ $msg->sent_at ? $msg->sent_at->format('h:i A') : '' }}</span>
+                    @if($isMe)
+                        @if($msg->is_read)
+                            <span class="chat-read-receipt text-cyan-500 font-bold" title="Read">
+                                <i class="fa-solid fa-check-double text-[11px] text-cyan-500"></i>
+                            </span>
+                        @else
+                            <span class="chat-read-receipt text-slate-400" title="Sent">
+                                <i class="fa-solid fa-check text-[11px] text-slate-400"></i>
+                            </span>
+                        @endif
+                    @endif
+                </div>
             </div>
             @empty
-            <div class="p-12 text-center text-slate-400">
+            <div id="noMessagesPlaceholder" class="p-12 text-center text-slate-400">
                 <i class="fa-solid fa-comments text-4xl mb-2 text-slate-300"></i>
                 <p class="text-xs font-semibold text-slate-600">No prior messages with {{ $selectedUser->name }}.</p>
                 <p class="text-[11px] text-slate-400 mt-0.5">Send a message below to start communication.</p>
@@ -108,16 +121,158 @@
 
         <!-- Send Message Box -->
         <div class="p-4 border-t border-slate-200 bg-white">
-            <form action="{{ route('communication.messages.send') }}" method="POST" class="flex gap-2">
+            <form id="chatSendForm" action="{{ route('communication.messages.send') }}" method="POST" class="flex gap-2">
                 @csrf
-                <input type="hidden" name="receiver_id" value="{{ $selectedUser->id }}">
-                <input type="text" name="message_body" required placeholder="Type secure internal message to {{ $selectedUser->name }}..."
+                <input type="hidden" name="receiver_id" id="chatReceiverId" value="{{ $selectedUser->id }}">
+                <input type="text" name="message_body" id="chatMessageInput" required placeholder="Type secure internal message to {{ $selectedUser->name }}..."
                        class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                <button type="submit" class="px-5 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-2xl shadow-md transition flex items-center gap-1.5">
+                <button type="submit" id="chatSendBtn" class="px-5 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-2xl shadow-md transition flex items-center gap-1.5 shrink-0">
                     <i class="fa-solid fa-paper-plane"></i> Send
                 </button>
             </form>
         </div>
+
+        @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const stream = document.getElementById('chatMessagesStream');
+                const chatForm = document.getElementById('chatSendForm');
+                const chatInput = document.getElementById('chatMessageInput');
+                const sendBtn = document.getElementById('chatSendBtn');
+                const receiverId = {{ $selectedUser->id }};
+                const pollUrl = "{{ route('communication.messages.chat-poll') }}";
+                let isPolling = false;
+
+                // Auto-scroll to bottom of conversation
+                function scrollToBottom(smooth = false) {
+                    if (stream) {
+                        stream.scrollTo({
+                            top: stream.scrollHeight,
+                            behavior: smooth ? 'smooth' : 'auto'
+                        });
+                    }
+                }
+                scrollToBottom(false);
+
+                // Get highest rendered message ID
+                function getMaxMessageId() {
+                    const messageEls = document.querySelectorAll('.message-item');
+                    let maxId = 0;
+                    messageEls.forEach(el => {
+                        const id = parseInt(el.getAttribute('data-message-id') || '0', 10);
+                        if (id > maxId) maxId = id;
+                    });
+                    return maxId;
+                }
+
+                // Poll for read status updates and incoming messages
+                async function pollChatStatus() {
+                    if (isPolling || document.hidden) return;
+                    isPolling = true;
+
+                    try {
+                        const maxId = getMaxMessageId();
+                        const res = await fetch(`${pollUrl}?user_id=${receiverId}&last_id=${maxId}`, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+
+                            // 1. Update read receipts (WhatsApp double ticks turn cyan)
+                            if (data.read_ids && data.read_ids.length > 0) {
+                                data.read_ids.forEach(readId => {
+                                    const item = document.querySelector(`.message-item[data-message-id="${readId}"][data-is-me="1"]`);
+                                    if (item) {
+                                        const receipt = item.querySelector('.chat-read-receipt');
+                                        if (receipt && !receipt.classList.contains('text-cyan-500')) {
+                                            receipt.className = 'chat-read-receipt text-cyan-500 font-bold';
+                                            receipt.setAttribute('title', 'Read');
+                                            receipt.innerHTML = '<i class="fa-solid fa-check-double text-[11px] text-cyan-500"></i>';
+                                        }
+                                    }
+                                });
+                            }
+
+                            // 2. Append newly delivered messages
+                            if (data.new_messages && data.new_messages.length > 0) {
+                                const placeholder = document.getElementById('noMessagesPlaceholder');
+                                if (placeholder) placeholder.remove();
+
+                                data.new_messages.forEach(msg => {
+                                    if (!document.querySelector(`.message-item[data-message-id="${msg.id}"]`)) {
+                                        const row = document.createElement('div');
+                                        row.className = `flex flex-col ${msg.is_me ? 'items-end' : 'items-start'} message-item`;
+                                        row.setAttribute('data-message-id', msg.id);
+                                        row.setAttribute('data-is-me', msg.is_me ? '1' : '0');
+
+                                        const bubble = document.createElement('div');
+                                        bubble.className = `max-w-md p-4 rounded-2xl text-xs leading-relaxed ${msg.is_me ? 'bg-cyan-600 text-white rounded-br-none shadow-md shadow-cyan-600/20' : 'bg-white border border-slate-200/80 text-slate-800 rounded-bl-none shadow-xs'}`;
+                                        bubble.textContent = msg.message_body;
+
+                                        const meta = document.createElement('div');
+                                        meta.className = 'flex items-center gap-1.5 mt-1 px-1 text-[10px] text-slate-400';
+                                        
+                                        const timeSpan = document.createElement('span');
+                                        timeSpan.textContent = msg.time;
+                                        meta.appendChild(timeSpan);
+
+                                        if (msg.is_me) {
+                                            const receiptSpan = document.createElement('span');
+                                            if (msg.is_read) {
+                                                receiptSpan.className = 'chat-read-receipt text-cyan-500 font-bold';
+                                                receiptSpan.setAttribute('title', 'Read');
+                                                receiptSpan.innerHTML = '<i class="fa-solid fa-check-double text-[11px] text-cyan-500"></i>';
+                                            } else {
+                                                receiptSpan.className = 'chat-read-receipt text-slate-400';
+                                                receiptSpan.setAttribute('title', 'Sent');
+                                                receiptSpan.innerHTML = '<i class="fa-solid fa-check text-[11px] text-slate-400"></i>';
+                                            }
+                                            meta.appendChild(receiptSpan);
+                                        }
+
+                                        row.appendChild(bubble);
+                                        row.appendChild(meta);
+                                        stream.appendChild(row);
+                                    }
+                                });
+                                scrollToBottom(true);
+                            }
+                        }
+                    } catch (e) {
+                        // Silent retry on transient connection drops
+                    } finally {
+                        isPolling = false;
+                    }
+                }
+
+                // Event-driven status update: only poll when unread outgoing messages exist, on focus, or after sending
+                function checkStatusIfPending() {
+                    const hasUnread = document.querySelector('.message-item[data-is-me="1"] .chat-read-receipt.text-slate-400');
+                    if (hasUnread) {
+                        pollChatStatus();
+                    }
+                }
+
+                // Check once on load if there are unread messages waiting for double tick
+                checkStatusIfPending();
+
+                // Check on user focus or click in the chat area
+                if (chatInput) {
+                    chatInput.addEventListener('focus', pollChatStatus);
+                }
+                stream.addEventListener('click', pollChatStatus);
+
+                // When user submits a message, check status after 3s and 7s, then stop
+                if (chatForm) {
+                    chatForm.addEventListener('submit', () => {
+                        setTimeout(pollChatStatus, 3000);
+                        setTimeout(pollChatStatus, 7000);
+                    });
+                }
+            });
+        </script>
+        @endpush
         @else
         <div class="flex-1 flex flex-col items-center justify-center p-12 text-slate-400">
             <div class="w-16 h-16 rounded-3xl bg-slate-100 flex items-center justify-center text-2xl text-slate-400 mb-4">

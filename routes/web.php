@@ -100,6 +100,7 @@ Route::middleware(['auth'])->group(function () {
     // 2. Appointments
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
+    Route::get('/appointments/available-slots', [AppointmentController::class, 'getAvailableSlots'])->name('appointments.available-slots');
     Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::get('/appointments/{id}', [AppointmentController::class, 'show'])->name('appointments.show');
     Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.updateStatus');
@@ -140,6 +141,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/facilities/discharge/{id}', [FacilityController::class, 'discharge'])->name('facilities.discharge');
     Route::post('/facilities/beds/{id}/status', [FacilityController::class, 'updateBedStatus'])->name('facilities.beds.updateStatus');
     Route::post('/facilities/rooms', [FacilityController::class, 'storeRoom'])->name('facilities.rooms.store');
+    Route::post('/facilities/rooms/rename', [FacilityController::class, 'renameRoom'])->name('facilities.rooms.rename');
+    Route::post('/facilities/beds', [FacilityController::class, 'storeBed'])->name('facilities.beds.store');
 
     // 8. Pharmacy & Inventory Management
     Route::get('/pharmacy', [PharmacyController::class, 'index'])->name('pharmacy.index');
@@ -147,6 +150,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/pharmacy/{id}', [PharmacyController::class, 'update'])->name('pharmacy.update');
     Route::post('/pharmacy/{id}/adjust', [PharmacyController::class, 'adjustStock'])->name('pharmacy.adjustStock');
     Route::post('/pharmacy/{id}/order', [PharmacyController::class, 'placeOrder'])->name('pharmacy.order');
+    Route::post('/pharmacy/{id}/buy', [PharmacyController::class, 'buy'])->name('pharmacy.buy');
+    Route::post('/pharmacy/orders/{id}/cancel', [PharmacyController::class, 'cancelOrder'])->name('pharmacy.orders.cancel');
+    Route::post('/pharmacy/orders/{id}/status', [PharmacyController::class, 'updateOrderStatus'])->name('pharmacy.orders.status');
     Route::get('/pharmacy/dispense-queue', [PharmacyController::class, 'dispenseQueue'])->name('pharmacy.dispense-queue');
 
     // 9. Billing & Invoicing
@@ -161,10 +167,14 @@ Route::middleware(['auth'])->group(function () {
 
     // 10. Communication & Notifications
     Route::get('/notifications', [CommunicationController::class, 'notifications'])->name('communication.notifications');
+    Route::get('/notifications/live-poll', [CommunicationController::class, 'livePoll'])->name('communication.notifications.live-poll');
+    Route::post('/notifications/ajax-mark-all-read', [CommunicationController::class, 'ajaxMarkAllRead'])->name('communication.notifications.ajaxMarkAllRead');
+    Route::post('/notifications/{id}/ajax-mark-read', [CommunicationController::class, 'ajaxMarkRead'])->name('communication.notifications.ajaxMarkRead');
     Route::get('/notifications/{id}/open', [CommunicationController::class, 'openNotification'])->name('communication.notifications.open');
     Route::post('/notifications/{id}/read', [CommunicationController::class, 'markAsRead'])->name('communication.notifications.read');
     Route::post('/notifications/read-all', [CommunicationController::class, 'markAllRead'])->name('communication.notifications.readAll');
     Route::get('/messages', [CommunicationController::class, 'messages'])->name('communication.messages');
+    Route::get('/messages/chat-poll', [CommunicationController::class, 'chatPoll'])->name('communication.messages.chat-poll');
     Route::post('/messages', [CommunicationController::class, 'sendMessage'])->name('communication.messages.send');
 
     // 11. Ambulance Complaints & Issue Reports (Driver, Admin, Superadmin)

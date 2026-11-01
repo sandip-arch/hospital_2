@@ -51,7 +51,7 @@
 
     <!-- 1. Primary Hospital Configuration Form -->
     <div class="bg-white rounded-3xl p-6 lg:p-8 border border-slate-200/80 shadow-soft">
-        <form action="{{ route('admin.settings.update') }}" method="POST" class="space-y-6">
+        <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ logoPreview: null, removeLogo: false }">
             @csrf
 
             <!-- Hospital Branding & Contact -->
@@ -61,6 +61,82 @@
                         <i class="fa-solid fa-hospital text-purple-600"></i> Healthcare Facility Branding & Info
                     </h4>
                     <span class="text-[11px] font-mono text-slate-400">Live Database Values</span>
+                </div>
+
+                <!-- Hospital Official Logo Configuration -->
+                <div class="mb-5 p-4 rounded-2xl bg-purple-50/50 border border-purple-100 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full inline-block mb-1">
+                                <i class="fa-solid fa-stamp mr-1"></i> Hospital Identity Logo
+                            </span>
+                            <h5 class="text-xs font-bold text-slate-900">Hospital Logo (Website, Invoices, Prescriptions & Printouts)</h5>
+                            <p class="text-[11px] text-slate-500">
+                                Upload a hospital emblem or icon (PNG, JPG, SVG, WebP). This logo is prominently displayed in the website header, invoices, e-prescriptions, and paper printouts.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center pt-2">
+                        <!-- Preview Box -->
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-purple-200 shadow-xs">
+                            <div class="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                                <template x-if="logoPreview">
+                                    <img :src="logoPreview" class="w-full h-full object-contain p-1" alt="Logo preview">
+                                </template>
+                                <template x-if="!logoPreview && !removeLogo">
+                                    @if(!empty($settings['hospital_logo']))
+                                    <img src="{{ Str::startsWith($settings['hospital_logo'], 'http') ? $settings['hospital_logo'] : asset($settings['hospital_logo']) }}" 
+                                         class="w-full h-full object-contain p-1" alt="Current Logo">
+                                    @else
+                                    <div class="text-center text-slate-400">
+                                        <i class="fa-solid fa-hospital text-2xl"></i>
+                                        <span class="block text-[9px] mt-0.5">No Logo</span>
+                                    </div>
+                                    @endif
+                                </template>
+                                <template x-if="removeLogo">
+                                    <div class="text-center text-rose-400">
+                                        <i class="fa-solid fa-trash-can text-xl"></i>
+                                        <span class="block text-[8px] mt-0.5">Removed</span>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block">Active Branding</span>
+                                <p class="text-xs font-bold text-slate-800 truncate">
+                                    {{ !empty($settings['hospital_logo']) ? basename($settings['hospital_logo']) : 'Default Crest' }}
+                                </p>
+                                @if(!empty($settings['hospital_logo']))
+                                <button type="button" @click="removeLogo = !removeLogo; if(removeLogo) logoPreview = null;" 
+                                        class="mt-1 text-[10px] font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1">
+                                    <i class="fa-solid fa-trash-can text-[9px]"></i> 
+                                    <span x-text="removeLogo ? 'Undo Remove' : 'Clear / Remove Logo'"></span>
+                                </button>
+                                <input type="hidden" name="remove_logo" :value="removeLogo ? '1' : '0'">
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Direct File Upload -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Upload New Logo File</label>
+                            <input type="file" name="hospital_logo_file" accept="image/*"
+                                   @change="const file = $event.target.files[0]; if(file) { removeLogo = false; const reader = new FileReader(); reader.onload = (e) => logoPreview = e.target.result; reader.readAsDataURL(file); }"
+                                   class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer">
+                            <span class="text-[10px] text-slate-400 mt-1 block">Supported: PNG, SVG, JPG, WebP (Max 4MB)</span>
+                        </div>
+
+                        <!-- Logo URL or Custom Path -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Or Logo Web URL / Path</label>
+                            <input type="text" name="hospital_logo" value="{{ old('hospital_logo', $settings['hospital_logo'] ?? '') }}"
+                                   placeholder="https://... or /uploads/..."
+                                   @input="logoPreview = $event.target.value; removeLogo = false;"
+                                   class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 transition">
+                            <span class="text-[10px] text-slate-400 mt-1 block">External image URL or local path</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -48,12 +48,12 @@
             </div>
 
             <div class="sm:col-span-12 flex items-center justify-between pt-2 border-t border-slate-100 mt-2">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2" data-live-reset-container>
                     <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition">
                         <i class="fa-solid fa-filter mr-1"></i> Filter Appointments
                     </button>
                     @if(request()->hasAny(['date', 'doctor_id', 'department_id', 'status']))
-                    <a href="{{ route('appointments.index') }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition">
+                    <a href="{{ route('appointments.index') }}" data-live-reset class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition">
                         Reset Filters
                     </a>
                     @endif
@@ -67,7 +67,7 @@
     </div>
 
     <!-- Appointments Table -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden" data-live-results>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead>

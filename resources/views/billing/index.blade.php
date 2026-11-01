@@ -104,7 +104,7 @@
     @endif
 
     <!-- Status Filter Pills -->
-    <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold custom-scrollbar">
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold custom-scrollbar" data-live-nav>
         @php
             $currentStatus = request('status', '');
             $hasActiveFilters = request('search') || request('status') || (request('date_preset') && request('date_preset') !== 'all') || request('date_from') || request('date_to') || (request('payment_method') && request('payment_method') !== 'all') || request('patient_id');
@@ -295,7 +295,7 @@
                 </span>
                 @endif
             </div>
-            <a href="{{ route('billing.index') }}" class="text-rose-600 hover:text-rose-700 font-bold hover:underline flex items-center gap-1">
+            <a href="{{ route('billing.index') }}" data-live-reset class="text-rose-600 hover:text-rose-700 font-bold hover:underline flex items-center gap-1">
                 <i class="fa-solid fa-xmark"></i> Clear All Filters
             </a>
         </div>
@@ -311,7 +311,7 @@
     @endif
 
     <!-- Invoices & Transaction History Table -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden" data-live-results>
         <div class="p-5 border-b border-slate-100 flex items-center justify-between">
             <div>
                 <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">

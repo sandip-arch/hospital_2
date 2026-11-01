@@ -28,7 +28,12 @@ class FacilityController extends Controller
             $query->where('room_type', $request->room_type);
         }
 
-        $rooms = $query->orderBy('room_number')->get();
+        // Fixed 8 rooms with Emergency and ICU rooms prioritized
+        $rooms = $query->orderByRaw("CASE WHEN room_type = 'Emergency' THEN 0 WHEN room_type = 'ICU' THEN 1 ELSE 2 END")
+                       ->orderBy('room_number')
+                       ->take(8)
+                       ->get();
+
         $departments = Department::all();
         $patients = Patient::whereDoesntHave('admissions', function ($q) {
             $q->where('status', 'admitted');
@@ -49,7 +54,12 @@ class FacilityController extends Controller
             ->orderBy('bed_number')
             ->get();
 
-        return view('facilities.bed-tracker', compact('rooms', 'departments', 'patients', 'doctors', 'stats', 'availableBeds'));
+        $activeAdmissions = Admission::with(['patient', 'bed.room.department', 'doctor.user'])
+            ->where('status', 'admitted')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return view('facilities.bed-tracker', compact('rooms', 'departments', 'patients', 'doctors', 'stats', 'availableBeds', 'activeAdmissions'));
     }
 
     public function admissions(Request $request)
@@ -327,5 +337,68 @@ class FacilityController extends Controller
         AuditService::log('CREATE', 'rooms', $room->id, "Added Room {$room->room_number} with {$validated['beds_count']} beds");
 
         return back()->with('success', "Room {$room->room_number} with {$validated['beds_count']} beds created successfully.");
+    }
+
+    public function renameRoom(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && !$user->isStaff()) {
+            abort(403, 'Unauthorized. Only administrators and staff can rename rooms.');
+        }
+
+        $validated = $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'room_number' => 'required|string|max:30',
+        ]);
+
+        $exists = Room::where('room_number', $validated['room_number'])
+            ->where('id', '!=', $validated['room_id'])
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', "A room with the number/name '{$validated['room_number']}' already exists.");
+        }
+
+        $room = Room::findOrFail($validated['room_id']);
+        $oldName = $room->room_number;
+        $room->update(['room_number' => $validated['room_number']]);
+
+        AuditService::log('UPDATE', 'rooms', $room->id, "Renamed Room '{$oldName}' to '{$room->room_number}'");
+
+        return back()->with('success', "Room '{$oldName}' successfully renamed to '{$room->room_number}'.");
+    }
+
+    public function storeBed(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && !$user->isStaff() && !$user->isDoctor()) {
+            abort(403, 'Unauthorized. Only medical and administrative staff can provision beds.');
+        }
+
+        $validated = $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'bed_number' => 'required|string|max:30',
+            'status' => 'nullable|in:available,cleaning,maintenance',
+        ]);
+
+        $exists = Bed::where('room_id', $validated['room_id'])
+            ->where('bed_number', $validated['bed_number'])
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', "Bed '{$validated['bed_number']}' already exists in this room.");
+        }
+
+        $room = Room::findOrFail($validated['room_id']);
+
+        $bed = Bed::create([
+            'room_id' => $room->id,
+            'bed_number' => $validated['bed_number'],
+            'status' => $validated['status'] ?? 'available',
+        ]);
+
+        AuditService::log('CREATE', 'beds', $bed->id, "Added Bed #{$bed->bed_number} to Room {$room->room_number}");
+
+        return back()->with('success', "Bed #{$bed->bed_number} added to Room {$room->room_number} successfully.");
     }
 }

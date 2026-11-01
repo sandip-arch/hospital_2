@@ -48,7 +48,7 @@
         </div>
 
         <!-- Doctors Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-live-results>
             @forelse($doctors as $doc)
             <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-lg transition">
                 <div>

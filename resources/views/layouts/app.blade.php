@@ -229,31 +229,24 @@
 
 
         <!-- Hospital Branding -->
-
         <div class="h-20 flex items-center gap-3.5 px-6 bg-slate-950/80 border-b border-slate-800/80">
-
-            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 ring-1 ring-cyan-400/30">
-
+            @if(!empty($hospitalSettings['hospital_logo']))
+            <img src="{{ Str::startsWith($hospitalSettings['hospital_logo'], 'http') ? $hospitalSettings['hospital_logo'] : asset($hospitalSettings['hospital_logo']) }}" 
+                 alt="{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}"
+                 class="w-11 h-11 rounded-2xl object-contain bg-white/10 p-1 border border-cyan-400/30 shadow-lg shadow-cyan-500/25 shrink-0">
+            @else
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 ring-1 ring-cyan-400/30 shrink-0">
                 <i class="fa-solid fa-hospital text-xl"></i>
-
             </div>
-
+            @endif
             <div>
-
                 <h1 class="font-heading font-extrabold text-white tracking-wide text-base leading-tight truncate max-w-[160px]" title="{{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}">
-
                     {{ $hospitalSettings['hospital_name'] ?? 'Apex Horizon' }}
-
                 </h1>
-
                 <p class="text-[10px] text-cyan-400 font-bold tracking-widest uppercase truncate max-w-[160px]">
-
                     {{ $hospitalSettings['hospital_phone'] ?? 'Medical Center' }}
-
                 </p>
-
             </div>
-
         </div>
 
 
@@ -618,102 +611,102 @@
 
 
 
-                <!-- Notifications Dropdown -->
-
-                <div class="relative z-50" x-data="{ open: false }">
-
-                    <button @click="open = !open" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition">
-
+                <!-- Notifications Dropdown (Real-Time Auto-Updating) -->
+                @php
+                    $initUnread = Auth::user()->notifications()->where('is_read', false)->count();
+                    $initLatestId = Auth::user()->notifications()->max('id') ?? 0;
+                    $initList = Auth::user()->notifications()->where('is_read', false)->latest()->take(6)->get()->map(function($n) {
+                        return [
+                            'id' => $n->id,
+                            'title' => $n->title,
+                            'message' => $n->message,
+                            'type_icon' => $n->type_icon,
+                            'target_url' => route('communication.notifications.open', $n->id),
+                            'time_ago' => $n->created_at->diffForHumans(),
+                        ];
+                    })->values()->toJson();
+                @endphp
+                <div class="relative z-50" x-data="liveNotificationHandler({{ $initUnread }}, {{ $initLatestId }}, JSON.parse('{{ addslashes($initList) }}'))">
+                    <button @click="toggleDropdown()" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition">
                         <i class="fa-solid fa-bell text-lg"></i>
-
-                        @php
-
-                            $unreadNotifs = Auth::user()->notifications()->where('is_read', false)->count();
-
-                        @endphp
-
-                        @if($unreadNotifs > 0)
-
-                        <span class="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse">
-
-                            {{ $unreadNotifs }}
-
-                        </span>
-
-                        @endif
-
+                        <template x-if="unreadCount > 0">
+                            <span class="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse"
+                                  x-text="unreadCount > 99 ? '99+' : unreadCount">
+                            </span>
+                        </template>
                     </button>
 
-
-
                     <div x-show="open" @click.outside="open = false" x-cloak
-
                          class="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200/80 py-3 z-50">
-
                         <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-
-                            <span class="font-heading font-bold text-sm text-slate-900">Notifications ({{ $unreadNotifs }} New)</span>
-
-                            @if($unreadNotifs > 0)
-
-                            <form action="{{ route('communication.notifications.readAll') }}" method="POST">
-
-                                @csrf
-
-                                <button type="submit" class="text-xs font-bold text-cyan-600 hover:underline">Mark all read</button>
-
-                            </form>
-
-                            @endif
-
+                            <span class="font-heading font-bold text-sm text-slate-900">
+                                Notifications (<span x-text="unreadCount"></span> New)
+                            </span>
+                            <template x-if="unreadCount > 0">
+                                <button type="button" @click="markAllAsRead()" class="text-xs font-bold text-cyan-600 hover:underline">
+                                    Mark all read
+                                </button>
+                            </template>
                         </div>
 
                         <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 custom-scrollbar">
+                            <template x-for="n in notifications" :key="n.id">
+                                <a :href="n.target_url" @click="markOneAsRead(n.id)" class="p-3.5 hover:bg-slate-50/80 transition flex gap-3 bg-cyan-50/30 block group">
+                                    <div class="w-8 h-8 rounded-xl bg-cyan-100 group-hover:bg-cyan-600 group-hover:text-white text-cyan-700 flex items-center justify-center text-xs shrink-0 mt-0.5 transition">
+                                        <i :class="'fa-solid ' + (n.type_icon || 'fa-bell text-cyan-600')"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-xs font-bold text-slate-900 truncate group-hover:text-cyan-700 transition" x-text="n.title"></p>
+                                        <p class="text-[11px] text-slate-500 line-clamp-2 mt-0.5" x-text="n.message"></p>
+                                        <span class="text-[10px] text-slate-400 mt-1 block font-medium" x-text="n.time_ago"></span>
+                                    </div>
+                                </a>
+                            </template>
 
-                            @forelse(Auth::user()->notifications()->where('is_read', false)->latest()->take(6)->get() as $n)
-
-                            <a href="{{ route('communication.notifications.open', $n->id) }}" class="p-3.5 hover:bg-slate-50/80 transition flex gap-3 bg-cyan-50/30 block group">
-
-                                <div class="w-8 h-8 rounded-xl bg-cyan-100 group-hover:bg-cyan-600 group-hover:text-white text-cyan-700 flex items-center justify-center text-xs shrink-0 mt-0.5 transition">
-
-                                    <i class="fa-solid {{ $n->type_icon }}"></i>
-
+                            <template x-if="notifications.length === 0">
+                                <div class="p-8 text-center text-xs text-slate-400">
+                                    <i class="fa-regular fa-bell-slash text-2xl mb-2 text-slate-300"></i>
+                                    <p>No unread notifications</p>
                                 </div>
-
-                                <div class="flex-1 min-w-0">
-
-                                    <p class="text-xs font-bold text-slate-900 truncate group-hover:text-cyan-700 transition">{{ $n->title }}</p>
-
-                                    <p class="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{{ $n->message }}</p>
-
-                                    <span class="text-[10px] text-slate-400 mt-1 block font-medium">{{ $n->created_at->diffForHumans() }}</span>
-
-                                </div>
-
-                            </a>
-
-                            @empty
-
-                            <div class="p-8 text-center text-xs text-slate-400">
-
-                                <i class="fa-regular fa-bell-slash text-2xl mb-2 text-slate-300"></i>
-
-                                <p>No unread notifications</p>
-
-                            </div>
-
-                            @endforelse
-
+                            </template>
                         </div>
 
                         <div class="px-5 pt-3 border-t border-slate-100 text-center">
-
                             <a href="{{ route('communication.notifications') }}" class="text-xs font-bold text-cyan-600 hover:underline">View All Notifications &rarr;</a>
-
                         </div>
-
                     </div>
 
+                    <!-- Real-Time Floating Notification Toast -->
+                    <div x-show="toast" x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+                         class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white rounded-2xl shadow-2xl border border-cyan-200/90 p-4 flex items-start gap-3.5 backdrop-blur-md"
+                         style="display: none;">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                            <i class="fa-solid fa-bell text-base animate-bounce"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider text-cyan-600">New Alert</span>
+                                <button @click="toast = null" class="text-slate-400 hover:text-slate-600 text-xs p-0.5">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <p class="font-bold text-slate-900 text-xs mt-0.5 truncate" x-text="toast?.title"></p>
+                            <p class="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-snug" x-text="toast?.message"></p>
+                            <div class="mt-2.5 flex items-center gap-2">
+                                <a :href="toast?.url" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10.5px] rounded-lg transition inline-flex items-center gap-1 shadow-xs">
+                                    Open <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                                </a>
+                                <button @click="toast = null" class="px-2.5 py-1 text-slate-500 hover:text-slate-700 text-[10.5px] font-semibold">
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -903,6 +896,292 @@
     </div>
 
     @include('components.ai-chat-widget')
+
+    <!-- Real-Time Notification & Universal Live Filter Scripts -->
+    <script>
+        // 1. Event-Driven Notification Handler (Zero Idle Timer Polling - only triggers on demand or user state change)
+        function liveNotificationHandler(initialUnread, initialLatestId, initialList) {
+            return {
+                open: false,
+                unreadCount: initialUnread || 0,
+                lastSeenId: initialLatestId || 0,
+                notifications: initialList || [],
+                toast: null,
+                isPolling: false,
+
+                init() {
+                    // Listen for application change events (triggered after actions/updates)
+                    window.addEventListener('hospital-state-change', () => {
+                        this.poll();
+                    });
+
+                    // Cross-tab notification sync without periodic HTTP polling
+                    window.addEventListener('storage', (e) => {
+                        if (e.key === 'hospital_notification_sync') {
+                            this.poll();
+                        }
+                    });
+                },
+
+                toggleDropdown() {
+                    this.open = !this.open;
+                    // On-demand fetch: only query fresh notifications when the user actually opens the bell menu
+                    if (this.open) {
+                        this.poll();
+                    }
+                },
+
+                async poll() {
+                    if (this.isPolling) return;
+                    this.isPolling = true;
+
+                    try {
+                        const res = await fetch('{{ route("communication.notifications.live-poll") }}', {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        if (!res.ok) return;
+
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            if (data.latest_id > this.lastSeenId && data.notifications.length > 0) {
+                                const newest = data.notifications[0];
+                                if (this.lastSeenId > 0) {
+                                    this.showToast(newest.title, newest.message, newest.target_url);
+                                }
+                                this.lastSeenId = data.latest_id;
+                            }
+
+                            this.unreadCount = data.unread_count;
+                            this.notifications = data.notifications;
+                        }
+                    } catch (e) {
+                        // ignore network blips
+                    } finally {
+                        this.isPolling = false;
+                    }
+                },
+
+                showToast(title, message, url) {
+                    this.toast = { title, message, url };
+                    setTimeout(() => {
+                        if (this.toast && this.toast.title === title) {
+                            this.toast = null;
+                        }
+                    }, 6000);
+                },
+
+                async markAllAsRead() {
+                    this.unreadCount = 0;
+                    this.notifications = [];
+                    this.toast = null;
+
+                    try {
+                        await fetch('{{ route("communication.notifications.ajaxMarkAllRead") }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+                    } catch (err) {
+                        console.error('Failed to mark notifications read', err);
+                    }
+                },
+
+                async markOneAsRead(id) {
+                    try {
+                        await fetch(`{{ url('/notifications') }}/${id}/ajax-mark-read`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+                        this.unreadCount = Math.max(0, this.unreadCount - 1);
+                        this.notifications = this.notifications.filter(n => n.id !== id);
+                    } catch (e) {}
+                }
+            };
+        }
+
+        // 2. Universal Live Search & Filter Engine (No Full Page Reloads)
+        class LiveFilterEngine {
+            constructor() {
+                this.debounceTimer = null;
+                this.activeController = null;
+                this.init();
+            }
+
+            init() {
+                // Intercept GET form submit
+                document.addEventListener('submit', (e) => {
+                    const form = e.target;
+                    if (form.matches('form[method="GET"], form[method="get"]')) {
+                        e.preventDefault();
+                        this.runFilter(form);
+                    }
+                });
+
+                // Debounce search text input (350ms delay)
+                document.addEventListener('input', (e) => {
+                    const input = e.target;
+                    const form = input.closest('form[method="GET"], form[method="get"]');
+                    if (!form) return;
+
+                    if (input.type === 'text' || input.type === 'search' || !input.type) {
+                        clearTimeout(this.debounceTimer);
+                        this.debounceTimer = setTimeout(() => {
+                            this.runFilter(form, input);
+                        }, 350);
+                    }
+                });
+
+                // Instant select / date changes
+                document.addEventListener('change', (e) => {
+                    const input = e.target;
+                    const form = input.closest('form[method="GET"], form[method="get"]');
+                    if (!form) return;
+
+                    if (input.tagName === 'SELECT' || input.type === 'date' || input.type === 'checkbox' || input.type === 'radio') {
+                        clearTimeout(this.debounceTimer);
+                        this.runFilter(form, input);
+                    }
+                });
+
+                // Intercept reset clicks
+                document.addEventListener('click', (e) => {
+                    const resetBtn = e.target.closest('a[data-live-reset]');
+                    if (resetBtn) {
+                        e.preventDefault();
+                        const form = document.querySelector('form[method="GET"], form[method="get"]');
+                        if (form) {
+                            form.reset();
+                            Array.from(form.elements).forEach(el => {
+                                if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                                if (el.type === 'text' || el.type === 'search' || el.type === 'date') el.value = '';
+                            });
+                            this.runFilter(form);
+                        } else {
+                            this.fetchAndSwap(resetBtn.href);
+                        }
+                    }
+
+                    // Intercept filter navigation tabs
+                    const navLink = e.target.closest('[data-live-nav] a');
+                    if (navLink && navLink.href) {
+                        e.preventDefault();
+                        this.fetchAndSwap(navLink.href);
+                    }
+
+                    // Intercept pagination clicks inside live tables
+                    const pageLink = e.target.closest('nav[role="navigation"] a, .pagination a');
+                    if (pageLink && pageLink.href) {
+                        e.preventDefault();
+                        this.fetchAndSwap(pageLink.href);
+                    }
+                });
+
+                // Popstate / Back button support
+                window.addEventListener('popstate', () => {
+                    this.fetchAndSwap(window.location.href, null, false);
+                });
+            }
+
+            async runFilter(form, triggeringElement = null) {
+                if (this.activeController) {
+                    this.activeController.abort();
+                }
+                this.activeController = new AbortController();
+
+                const formData = new FormData(form);
+                const params = new URLSearchParams();
+
+                for (const [key, value] of formData.entries()) {
+                    if (value !== '' && value !== null) {
+                        params.append(key, value);
+                    }
+                }
+
+                const baseUrl = form.getAttribute('action') || window.location.pathname;
+                const targetUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+
+                await this.fetchAndSwap(targetUrl, triggeringElement, true);
+            }
+
+            async fetchAndSwap(targetUrl, triggeringElement = null, pushHistory = true) {
+                const resultsContainer = document.querySelector('[data-live-results]')
+                    || document.querySelector('.overflow-x-auto')?.closest('.bg-white')
+                    || document.querySelector('main');
+
+                if (resultsContainer) {
+                    resultsContainer.classList.add('transition-opacity', 'duration-200');
+                    resultsContainer.style.opacity = '0.5';
+                }
+
+                try {
+                    const response = await fetch(targetUrl, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html'
+                        },
+                        signal: this.activeController?.signal
+                    });
+
+                    if (!response.ok) throw new Error('Filter fetch failed');
+                    const htmlText = await response.text();
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+
+                    // 1. Swap results
+                    const newResults = doc.querySelector('[data-live-results]')
+                        || doc.querySelector('.overflow-x-auto')?.closest('.bg-white')
+                        || doc.querySelector('main');
+
+                    if (resultsContainer && newResults) {
+                        resultsContainer.innerHTML = newResults.innerHTML;
+                    }
+
+                    // 2. Sync reset container
+                    const currentReset = document.querySelector('[data-live-reset-container]');
+                    const newReset = doc.querySelector('[data-live-reset-container]');
+                    if (currentReset && newReset) {
+                        currentReset.innerHTML = newReset.innerHTML;
+                    }
+
+                    // 3. Sync live navigation tabs if present
+                    const currentNav = document.querySelector('[data-live-nav]');
+                    const newNav = doc.querySelector('[data-live-nav]');
+                    if (currentNav && newNav) {
+                        currentNav.innerHTML = newNav.innerHTML;
+                    }
+
+                    // 4. Update URL in browser address bar
+                    if (pushHistory) {
+                        window.history.pushState(null, '', targetUrl);
+                    }
+
+                    // 4. Re-init Alpine if elements inside used Alpine directives
+                    if (window.Alpine && resultsContainer) {
+                        Alpine.initTree(resultsContainer);
+                    }
+
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Filter error:', err);
+                    }
+                } finally {
+                    if (resultsContainer) {
+                        resultsContainer.style.opacity = '1';
+                    }
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.liveFilterEngine = new LiveFilterEngine();
+        });
+    </script>
 
     @stack('scripts')
 

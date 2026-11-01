@@ -292,8 +292,12 @@
                     console.warn('GPS detection notice:', err.message);
                     txt.textContent = 'Detect My GPS';
                     btn.disabled = false;
+                    // Fallback to hospital coords if coordinates empty
+                    if (!document.getElementById('pickupLat').value) {
+                        updateCoords(hospitalCoords[0], hospitalCoords[1], true);
+                    }
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+                { enableHighAccuracy: false, timeout: 7000, maximumAge: 60000 }
             );
         }
 

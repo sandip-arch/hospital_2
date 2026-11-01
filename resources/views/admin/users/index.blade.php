@@ -44,7 +44,7 @@
     </div>
 
     <!-- Users Table -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden" data-live-results>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead>

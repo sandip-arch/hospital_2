@@ -11,7 +11,7 @@
     <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         
         <!-- Filter Form -->
-        <form action="{{ route('patients.index') }}" method="GET" class="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <form id="patients-filter-form" action="{{ route('patients.index') }}" method="GET" class="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-3">
             <div class="sm:col-span-6">
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -40,10 +40,15 @@
             </div>
         </form>
 
-        <div class="flex items-center gap-2 shrink-0">
-            <button type="submit" onclick="document.forms[0].submit()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition">
+        <div class="flex items-center gap-2 shrink-0" data-live-reset-container>
+            <button type="submit" form="patients-filter-form" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition">
                 <i class="fa-solid fa-filter mr-1"></i> Filter
             </button>
+            @if(request()->hasAny(['search', 'gender', 'blood_type']))
+            <a href="{{ route('patients.index') }}" data-live-reset class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition">
+                Reset
+            </a>
+            @endif
             <a href="{{ route('patients.create') }}" class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
                 <i class="fa-solid fa-user-plus"></i> Register Patient
             </a>
@@ -51,7 +56,7 @@
     </div>
 
     <!-- Patients Table -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden" data-live-results>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead>

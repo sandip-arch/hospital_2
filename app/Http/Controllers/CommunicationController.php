@@ -71,6 +71,62 @@ class CommunicationController extends Controller
         return view('communication.notifications', compact('notifications'));
     }
 
+    public function livePoll(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['unread_count' => 0, 'latest_id' => 0, 'notifications' => []]);
+        }
+
+        $unreadCount = Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->count();
+
+        $notifications = Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'title' => $n->title,
+                    'message' => $n->message,
+                    'type_icon' => $n->type_icon,
+                    'target_url' => route('communication.notifications.open', $n->id),
+                    'time_ago' => $n->created_at->diffForHumans(),
+                ];
+            });
+
+        $latestId = Notification::where('user_id', $user->id)->max('id') ?? 0;
+
+        return response()->json([
+            'status' => 'success',
+            'unread_count' => $unreadCount,
+            'latest_id' => $latestId,
+            'notifications' => $notifications,
+        ]);
+    }
+
+    public function ajaxMarkAllRead()
+    {
+        Notification::where('user_id', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['status' => 'success', 'message' => 'All marked as read.']);
+    }
+
+    public function ajaxMarkRead($id)
+    {
+        $notification = Notification::where('user_id', Auth::id())->find($id);
+        if ($notification) {
+            $notification->update(['is_read' => true]);
+        }
+
+        return response()->json(['status' => 'success']);
+    }
+
     public function markAsRead($id)
     {
         $notification = Notification::where('user_id', Auth::id())->findOrFail($id);
@@ -199,5 +255,57 @@ class CommunicationController extends Controller
         ]);
 
         return redirect()->route('communication.messages', ['user_id' => $validated['receiver_id']])->with('success', 'Message sent.');
+    }
+
+    public function chatPoll(Request $request)
+    {
+        $currentUser = Auth::user();
+        if (!$currentUser) {
+            return response()->json(['status' => 'unauthenticated'], 401);
+        }
+
+        $contactId = (int) $request->query('user_id');
+        $lastMessageId = (int) $request->query('last_id', 0);
+
+        if (!$contactId) {
+            return response()->json(['status' => 'error', 'message' => 'No contact specified']);
+        }
+
+        // Mark incoming unread messages from this contact as read
+        Message::where('sender_id', $contactId)
+            ->where('receiver_id', $currentUser->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        // Get status of messages sent by currentUser to this contact that are read
+        $readMessageIds = Message::where('sender_id', $currentUser->id)
+            ->where('receiver_id', $contactId)
+            ->where('is_read', true)
+            ->pluck('id');
+
+        // Check for new messages since lastMessageId
+        $newMessages = Message::where(function ($q) use ($currentUser, $contactId) {
+                $q->where('sender_id', $currentUser->id)->where('receiver_id', $contactId);
+            })->orWhere(function ($q) use ($currentUser, $contactId) {
+                $q->where('sender_id', $contactId)->where('receiver_id', $currentUser->id);
+            })
+            ->where('id', '>', $lastMessageId)
+            ->orderBy('sent_at', 'asc')
+            ->get()
+            ->map(function ($msg) use ($currentUser) {
+                return [
+                    'id' => $msg->id,
+                    'is_me' => $msg->sender_id === $currentUser->id,
+                    'message_body' => $msg->message_body,
+                    'time' => $msg->sent_at ? $msg->sent_at->format('h:i A') : '',
+                    'is_read' => (bool) $msg->is_read,
+                ];
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'read_ids' => $readMessageIds,
+            'new_messages' => $newMessages,
+        ]);
     }
 }

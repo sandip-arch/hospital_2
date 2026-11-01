@@ -546,7 +546,7 @@ class AmbulanceController extends Controller
                 'address' => $hInfo['address'],
                 'department' => $booking->destinationDepartment?->name ?? 'Emergency Medicine',
             ],
-            'ambulance' => [
+            'ambulance' => $amb ? [
                 'id' => $amb->id,
                 'vehicle_number' => $amb->vehicle_number,
                 'model' => $amb->model,
@@ -554,11 +554,11 @@ class AmbulanceController extends Controller
                 'status' => $amb->status,
                 'lat' => $amb->current_latitude,
                 'lng' => $amb->current_longitude,
-            ],
+            ] : null,
             'driver' => [
-                'name' => $booking->driver?->user?->name ?? $amb->currentDriver?->user?->name ?? 'Emergency Responder',
-                'phone' => $booking->driver?->contact_number ?? $amb->currentDriver?->contact_number ?? '+1 (555) 911-0000',
-                'license' => $booking->driver?->license_number ?? $amb->currentDriver?->license_number ?? 'Verified Medic',
+                'name' => $booking->driver?->user?->name ?? $amb?->currentDriver?->user?->name ?? 'Emergency Responder',
+                'phone' => $booking->driver?->contact_number ?? $amb?->currentDriver?->contact_number ?? '+1 (555) 911-0000',
+                'license' => $booking->driver?->license_number ?? $amb?->currentDriver?->license_number ?? 'Verified Medic',
             ],
             'metrics' => [
                 'distance_km' => $distanceKm,

@@ -29,9 +29,14 @@
                 <h3 class="text-lg font-black text-slate-900">{{ $doctor->full_name }} - Weekly Consultation Roster</h3>
                 <p class="text-xs text-slate-500">Department: {{ $doctor->department->name ?? 'Specialist' }} &bull; Fee: ${{ number_format($doctor->consultation_fee, 2) }}</p>
             </div>
-            <span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-200">
-                <i class="fa-solid fa-clock mr-1"></i> Active Roster
-            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+                <a href="{{ route('appointments.create', ['doctor_id' => $doctor->id]) }}" class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-plus text-[11px]"></i> Book Appointment
+                </a>
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-200">
+                    <i class="fa-solid fa-clock mr-1"></i> Active Roster
+                </span>
+            </div>
         </div>
 
         <form action="{{ route('doctor.schedule.update') }}" method="POST" class="space-y-4">
@@ -75,9 +80,15 @@
             </div>
 
             <div class="pt-4 flex justify-end">
+                @if(Auth::user()->isAdmin() || Auth::user()->isDoctor())
                 <button type="submit" class="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
                     <i class="fa-solid fa-floppy-disk"></i> Save Weekly Schedule
                 </button>
+                @else
+                <a href="{{ route('appointments.create', ['doctor_id' => $doctor->id]) }}" class="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-check"></i> Book Consultation With {{ $doctor->full_name }}
+                </a>
+                @endif
             </div>
         </form>
     </div>
