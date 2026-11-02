@@ -37,7 +37,27 @@ class ForgotPasswordController extends Controller
         ]);
 
         // Send the actual email using Laravel's Mail facade
-        Mail::raw("Your Apex Horizon password reset code is: {$otp}. This code will expire in 10 minutes.", function ($message) use ($email) {
+        Mail::raw("Dear User,
+
+We have received a request to reset the password associated with your Apex Horizon account.
+
+To proceed with your password reset, please use the following One-Time Password (OTP):
+
+Verification Code: {$otp}
+
+Validity: This verification code will expire in 10 minutes.
+
+For your account's security, please do not share this code with anyone, including Apex Horizon support representatives.
+
+If you did not request a password reset, you can safely ignore this email. Your account password will remain unchanged.
+
+Thank you for choosing Apex Horizon.
+
+Best regards,
+Apex Horizon Security Team
+Account Security & Support
+
+This is an automated security notification. Please do not reply to this email.", function ($message) use ($email) {
             $message->to($email)
                     ->subject('Password Reset OTP - Apex Horizon');
         });

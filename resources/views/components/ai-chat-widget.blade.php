@@ -4,21 +4,31 @@
 <!-- 🏥 APEX HORIZON AUTONOMOUS AI ASSISTANT - FLOATING CHAT WIDGET             -->
 <!-- ========================================================================= -->
 <div id="apex-ai-widget-root" class="fixed bottom-6 right-6 z-50 font-sans text-slate-800 antialiased" style="isolation: isolate;">
-    
+
     <!-- Floating Trigger Launcher Button -->
-    <button id="apex-ai-launcher" 
-            onclick="apexAiToggleWidget()"
-            aria-label="Open Hospital AI Assistant"
-            class="group relative flex items-center gap-3 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 hover:from-indigo-700 hover:to-cyan-600 text-white px-4 py-3.5 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-300">
-        
+    <button id="apex-ai-launcher"
+        onclick="apexAiToggleWidget()"
+        aria-label="Open Hospital AI Assistant"
+        class="group relative flex items-center gap-3 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 hover:from-indigo-700 hover:to-cyan-600 text-white px-4 py-3.5 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-300">
+
         <!-- Pulsing aura ring -->
         <span class="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 opacity-60 blur-sm group-hover:opacity-90 animate-pulse transition duration-1000"></span>
-        
+
         <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-white/20 backdrop-blur-md">
-            <i class="fa-solid fa-sparkles text-amber-300 text-sm group-hover:rotate-12 transition-transform duration-300"></i>
+            <div class="relative flex items-center justify-center
+            w-8 h-8 rounded-full bg-white/10
+            backdrop-blur-md overflow-hidden">
+
+                <img src="{{ asset('ai-chat.png') }}"
+                    alt="APEX AI Logo"
+                    class="w-full h-full rounded-full object-cover
+                group-hover:scale-100
+                transition-transform duration-200">
+            </div>
         </div>
 
         <div class="relative flex flex-col text-left">
+
             <span class="text-xs font-black uppercase tracking-widest text-cyan-100 flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 Apex AI
@@ -32,9 +42,9 @@
     </button>
 
     <!-- Expanding Chat Window Modal -->
-    <div id="apex-ai-window" 
-         class="hidden fixed bottom-6 right-6 w-[94vw] sm:w-[460px] h-[650px] max-h-[88vh] bg-white rounded-3xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden backdrop-blur-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
-        
+    <div id="apex-ai-window"
+        class="hidden fixed bottom-6 right-6 w-[94vw] sm:w-[460px] h-[650px] max-h-[88vh] bg-white rounded-3xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden backdrop-blur-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
+
         <!-- Window Header -->
         <div class="relative bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-indigo-900/50 shadow-md">
             <div class="flex items-center gap-3">
@@ -58,11 +68,11 @@
             <!-- Header Controls -->
             <div class="flex items-center gap-1.5">
                 <!-- Voice Dictation / Speaker Toggle Button -->
-                <button type="button" 
-                        id="apex-ai-speaker-toggle" 
-                        onclick="apexAiToggleSpeaker()" 
-                        title="Voice Dictation (Read responses aloud through speaker)" 
-                        class="h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center gap-1.5 text-xs transition border border-white/10">
+                <button type="button"
+                    id="apex-ai-speaker-toggle"
+                    onclick="apexAiToggleSpeaker()"
+                    title="Voice Dictation (Read responses aloud through speaker)"
+                    class="h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center gap-1.5 text-xs transition border border-white/10">
                     <i id="apex-ai-speaker-icon" class="fa-solid fa-volume-high text-cyan-300 text-xs"></i>
                     <span id="apex-ai-speaker-label" class="text-[10px] font-bold text-cyan-200 hidden sm:inline">Voice ON</span>
                 </button>
@@ -107,7 +117,7 @@
 
         <!-- Chat Messages Scroll Container -->
         <div id="apex-ai-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/70 text-xs custom-scrollbar">
-            
+
             <!-- Greeting Bubble -->
             <div class="flex items-start gap-2.5">
                 <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm text-[11px]">
@@ -160,26 +170,26 @@
             </div>
 
             <form id="apex-ai-form" onsubmit="apexAiSubmitMessage(event)" class="relative flex items-center gap-1.5">
-                <input type="text" 
-                       id="apex-ai-input" 
-                       placeholder="Ask questions or tap mic to talk..."
-                       autocomplete="off"
-                       class="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-xs text-slate-800 placeholder-slate-400 pl-4 pr-2 py-3 rounded-2xl border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" />
-                
+                <input type="text"
+                    id="apex-ai-input"
+                    placeholder="Ask questions or tap mic to talk..."
+                    autocomplete="off"
+                    class="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-xs text-slate-800 placeholder-slate-400 pl-4 pr-2 py-3 rounded-2xl border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" />
+
                 <!-- Microphone Button (Voice Input) -->
-                <button type="button" 
-                        id="apex-ai-mic-btn" 
-                        onclick="apexAiToggleVoiceRecognition()" 
-                        title="Voice Input (Click to speak into microphone)"
-                        class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center shrink-0 border border-slate-200/90 transition transform active:scale-95 shadow-sm">
+                <button type="button"
+                    id="apex-ai-mic-btn"
+                    onclick="apexAiToggleVoiceRecognition()"
+                    title="Voice Input (Click to speak into microphone)"
+                    class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center shrink-0 border border-slate-200/90 transition transform active:scale-95 shadow-sm">
                     <i id="apex-ai-mic-icon" class="fa-solid fa-microphone text-xs"></i>
                 </button>
 
                 <!-- Send Button -->
-                <button type="submit" 
-                        id="apex-ai-send-btn" 
-                        title="Send message"
-                        class="w-10 h-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shrink-0 shadow-md transition transform active:scale-95 disabled:opacity-50">
+                <button type="submit"
+                    id="apex-ai-send-btn"
+                    title="Send message"
+                    class="w-10 h-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shrink-0 shadow-md transition transform active:scale-95 disabled:opacity-50">
                     <i class="fa-solid fa-paper-plane text-xs"></i>
                 </button>
             </form>
@@ -207,7 +217,7 @@
     function apexAiToggleWidget() {
         const win = document.getElementById('apex-ai-window');
         const launcher = document.getElementById('apex-ai-launcher');
-        
+
         apexAiIsOpen = !apexAiIsOpen;
         if (apexAiIsOpen) {
             win.classList.remove('hidden');
@@ -229,10 +239,12 @@
 
         try {
             const res = await fetch("{{ route('ai.prompts') }}", {
-                headers: { 'Accept': 'application/json' }
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
             const data = await res.json();
-            
+
             if (data.status === 'success' && data.prompts) {
                 container.innerHTML = '';
                 data.prompts.forEach(p => {
@@ -258,7 +270,7 @@
     // Submit user message via AJAX to /ai/chat
     async function apexAiSubmitMessage(e) {
         if (e && e.preventDefault) e.preventDefault();
-        
+
         // Interrupt ongoing speech and stop active recording
         apexAiStopSpeaking();
         apexAiStopVoiceRecognition();
@@ -532,7 +544,7 @@
     // Reset current conversation
     async function apexAiClearChat() {
         if (!confirm('Clear this AI conversation history?')) return;
-        
+
         try {
             await fetch("{{ route('ai.conversation.clear') }}", {
                 method: 'POST',
@@ -541,7 +553,9 @@
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ conversation_id: apexAiConversationId })
+                body: JSON.stringify({
+                    conversation_id: apexAiConversationId
+                })
             });
 
             apexAiConversationId = null;
